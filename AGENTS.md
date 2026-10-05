@@ -5,6 +5,32 @@
 
 ---
 
+## 0. Strict Agent Execution & Permission Protocol
+
+This permission protocol is strict, non-negotiable, and must always be followed at all times:
+
+1. **Git Commit & Push (Explicit Permission Required)**:
+   * **ONLY ask for user permission before running `git commit` and `git push`.**
+   * Never execute `git commit` or `git push` autonomously. Always present the changes and ask for your approval first.
+   * For read-only and staging Git commands—such as `git show`, `git diff`, `git status`, `git log`, `git add`, and `git add .`—**do NOT ask for permission**; execute them autonomously as needed.
+
+2. **Autonomous Project Operations (DO NOT Ask for Permission)**:
+   * For all internal development actions inside the project directory, **proceed autonomously without asking for permission**:
+     * Staging and inspecting git changes (`git show`, `git diff`, `git status`, `git log`, `git add`, `git add .`).
+     * Creating, editing, or deleting project files.
+     * Creating folders and directory structures.
+     * Installing, updating, or removing dependencies (`pnpm add`, `pnpm install`).
+     * Running builds, linters, compilers, and test suites (`pnpm build`, `pnpm test`).
+     * Executing database schema generations, Prisma migrations, and seed scripts.
+     * Launching or stopping local Docker services (`docker compose up -d`).
+
+3. **System-Level & External Operations (Explicit Permission Required)**:
+   * **Always ask for user permission first** before:
+     * Any system-level update or global configuration change.
+     * Creating, modifying, or reading anything outside the project workspace directory (`e:\PROJECTS\whitraworks`).
+
+---
+
 ## 1. Golden Architectural Invariants
 
 These rules are non-negotiable. Any pull request or generated code that violates these rules is a critical failure.
@@ -18,7 +44,7 @@ These rules are non-negotiable. Any pull request or generated code that violates
 | **5** | **Host-Only Cookies (No Wildcards)** | Never set `domain: .whitraworks.com`. All session cookies must omit the domain attribute to lock strictly to the exact issuing host (`ops.whitraworks.com` or `<slug>.whitraworks.com`). |
 | **6** | **Two-Tier Privilege Orthogonality** | `isPlatformSuperadmin` and platform scopes (`platform:*`) are completely separate from tenant roles (`OWNER`, `ADMIN`, `STAFF`). A tenant Owner must never be able to satisfy a platform operator check. |
 | **7** | **Monorepo Tier Boundaries** | Frontend applications (`apps/ops-admin`, `apps/tenant-admin`) must **never** import `@whitraworks/database`, Prisma clients, or backend code. Communication is strictly over HTTP APIs using shared DTOs from `@whitraworks/types`. |
-| **8** | **Zod as the Single Source of Truth** | All API request bodies and route inputs must be validated with Zod schemas. Zero unvalidated payload execution. |
+| **8** | **Class-Validator DTOs & Swagger Annotations** | All backend inputs and responses must be modeled with typed DTO classes decorated with `class-validator` rules and `@ApiProperty()` Swagger annotations. Zero raw, unvalidated payload execution. |
 | **9** | **Atomic Registration & Collision Enforcement** | Public registration must enforce: (1) Email collision check directing user to their existing workspace, (2) Subdomain slug reserved check, (3) Atomic transaction creating User, Tenant, and Owner membership. |
 | **10** | **Scenario A Invariant** | A user cannot independently create secondary workspaces. Access to additional workspaces is 100% invite-only. |
 
@@ -52,6 +78,8 @@ When implementing tasks in this codebase, AI Agents must strictly follow this cy
 
 1. **Consult `TASKS.md`**: Pick the next uncompleted task in sequential order.
 2. **Review Relevant Docs**: Verify requirements against `PRD.md`, `ARCHITECTURE.md`, `DATA_MODEL.md`, and `API.md`.
-3. **Implement Cleanly**: Write code adhering to all Golden Rules.
-4. **Verify & Test**: Run linter, compiler checks, and tests before claiming completion.
+3. **Implement Cleanly**: Write code adhering to all Golden Rules and the permission protocol.
+4. **Verify & Test**: Run linter, compiler checks, and tests.
 5. **Update `TASKS.md` & `PROGRESS.md`**: Mark the completed task `[x]` and update the live status tracker.
+6. **Request Commit & Push Approval**: Present completed work and ask for user permission before committing or pushing.
+

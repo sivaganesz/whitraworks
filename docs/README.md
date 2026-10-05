@@ -15,7 +15,7 @@ Welcome to the central documentation repository for **WhitraWorks**, a multi-ten
 | [SECURITY.md](./SECURITY.md) | **Security & Multi-Tenant Isolation**<br>Data leakage prevention, cookie isolation, privilege escalation defense, and audit logging. | Security, Architecture, Backend |
 | [CAPABILITIES.md](./CAPABILITIES.md) | **Capability Engine Blueprint**<br>Pluggable business capabilities, registry definition, backend guards, and dynamic UI rendering. | Product, Full-Stack Engineering |
 | [DESIGN.md](./DESIGN.md) | **UI/UX Design System & Layouts**<br>Design tokens, layout specs for `ops-admin` and `tenant-admin`, navigation models, and component standards. | Frontend Engineering, Design |
-| [AGENTS.md](./AGENTS.md) | **AI Agent Guidelines & Golden Rules**<br>Non-negotiable coding conventions, architectural invariants, and rules of engagement for AI-assisted development. | AI Coding Agents, Developers |
+| [AGENTS.md](../AGENTS.md) | **AI Agent Guidelines & Golden Rules**<br>Non-negotiable coding conventions, architectural invariants, strict permission protocols, and rules of engagement for AI-assisted development. | AI Coding Agents, Developers |
 | [TASKS.md](./TASKS.md) | **Module-Wise Implementation Roadmap**<br>Comprehensive checklist of development tasks organized from Module 0 to Module 6 with acceptance criteria. | All Developers & Agents |
 | [PROGRESS.md](./PROGRESS.md) | **Live Implementation Status Tracker**<br>Real-time status board tracking completed modules, active work, and upcoming milestones. | All Developers & Agents |
 
