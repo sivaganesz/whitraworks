@@ -1,0 +1,19 @@
+{
+  "name": "@whitraworks/ui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared UI component library for WhitraWorks frontends",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.16.0",
+    "tailwind-merge": "^3.0.2"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.10",
+    "react": "^19.0.0",
+    "typescript": "^5.7.3"
+  }
+}
+

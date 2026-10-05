@@ -1,0 +1,301 @@
+# WhitraWorks Core Platform — Data Model & Prisma Schema
+
+**Status:** APPROVED / SPECIFICATION COMPLETE  
+**Database:** PostgreSQL 16  
+**ORM:** Prisma 5.x / 6.x  
+**Identifier Strategy:** UUID v7 (Time-sortable, 128-bit)  
+
+---
+
+## 1. Data Modeling Philosophy
+
+1. **Shared Database, Isolated Tenancy**: All tenants share a single PostgreSQL database for operational efficiency, with strict column-level multi-tenancy (`tenant_id`) enforced on all workspace-scoped tables.
+2. **UUID v7 Identifiers**: All primary keys utilize UUID v7. This provides time-sortable natural ordering (improving B-tree index locality) while maintaining global uniqueness.
+3. **Compound Indexes**: Every tenant-scoped entity features compound indexes starting with `tenant_id` to guarantee index seek performance and prevent cross-tenant scan leakage.
+4. **Automated Tenant Isolation (Prisma Extension)**: Database queries in the tenant context automatically inject `where: { tenantId }` via Prisma Client Extensions (`$extends`), preventing accidental developer omission.
+
+---
+
+## 2. Complete Prisma Schema (`schema.prisma`)
+
+```prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ─────────────────────────────────────────────────────────────
+// 1. GLOBAL IDENTITY & TENANTS (CONTROL PLANE)
+// ─────────────────────────────────────────────────────────────
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  INVITED
+}
+
+enum TenantStatus {
+  PROVISIONING
+  ACTIVE
+  SUSPENDED
+  TERMINATED
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
+}
+
+model User {
+  id                   String            @id @default(uuid())
+  email                String            @unique
+  passwordHash         String
+  firstName            String
+  lastName             String
+  isPlatformSuperadmin Boolean           @default(false)
+  status               UserStatus        @default(ACTIVE)
+  lastLoginAt          DateTime?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  memberships          WorkspaceMember[]
+  invitationsCreated   Invitation[]      @relation("InvitedBy")
+  auditLogs            AuditLog[]
+
+  @@index([email])
+  @@index([status])
+  @@map("users")
+}
+
+model Tenant {
+  id                String                   @id @default(uuid())
+  slug              String                   @unique // Subdomain key (e.g. "abchotel")
+  name              String                   // Display business name
+  status            TenantStatus             @default(ACTIVE)
+  currency          String                   @default("INR")
+  timezone          String                   @default("Asia/Kolkata")
+  logoUrl           String?
+  metadata          Json?                    @default("{}")
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+
+  members           WorkspaceMember[]
+  roles             Role[]
+  invitations       Invitation[]
+  capabilities      TenantCapabilityConfig[]
+  auditLogs         AuditLog[]
+
+  @@index([slug])
+  @@index([status])
+  @@map("tenants")
+}
+
+model WorkspaceMember {
+  id        String           @id @default(uuid())
+  tenantId  String
+  userId    String
+  roleId    String
+  status    MembershipStatus @default(ACTIVE)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  tenant    Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role             @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, userId]) // A user has exactly one membership per tenant
+  @@index([tenantId, status])
+  @@index([userId])
+  @@map("workspace_members")
+}
+
+// ─────────────────────────────────────────────────────────────
+// 2. TENANT-SCOPED RBAC & PERMISSIONS
+// ─────────────────────────────────────────────────────────────
+
+model Role {
+  id           String            @id @default(uuid())
+  tenantId     String?           // Null for global system role templates, set for tenant-specific roles
+  name         String            // "Owner", "Admin", "Staff", or custom name
+  code         String            // "OWNER", "ADMIN", "STAFF"
+  description  String?
+  isSystemRole Boolean           @default(false) // System roles cannot be deleted
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  tenant       Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  members      WorkspaceMember[]
+  permissions  RolePermission[]
+  invitations  Invitation[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@map("roles")
+}
+
+model Permission {
+  id          String           @id @default(uuid())
+  code        String           @unique // e.g. "members:invite", "settings:write"
+  name        String
+  description String?
+  category    String           // "workspace", "members", "capabilities", "audit"
+  createdAt   DateTime         @default(now())
+
+  roles       RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// ─────────────────────────────────────────────────────────────
+// 3. INVITATIONS & ONBOARDING
+// ─────────────────────────────────────────────────────────────
+
+model Invitation {
+  id          String    @id @default(uuid())
+  tenantId    String
+  email       String
+  roleId      String
+  token       String    @unique
+  invitedById String
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  role        Role      @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  invitedBy   User      @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, email])
+  @@index([token])
+  @@index([tenantId, expiresAt])
+  @@map("invitations")
+}
+
+// ─────────────────────────────────────────────────────────────
+// 4. CAPABILITY CONFIGURATION ENGINE
+// ─────────────────────────────────────────────────────────────
+
+model TenantCapabilityConfig {
+  id             String   @id @default(uuid())
+  tenantId       String
+  capabilityCode String   // e.g. "catalog", "orders", "kitchen", "inventory"
+  isEnabled      Boolean  @default(false)
+  configJson     Json     @default("{}")
+  updatedAt      DateTime @updatedAt
+
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, capabilityCode])
+  @@index([tenantId, isEnabled])
+  @@map("tenant_capability_configs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// 5. AUDIT & OBSERVABILITY
+// ─────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  tenantId   String?  // Null for platform-level actions, set for tenant actions
+  actorId    String?  // User ID who performed the action
+  action     String   // e.g. "tenant.suspend", "member.invite", "capability.toggle"
+  entityType String   // "Tenant", "WorkspaceMember", "Role", "Capability"
+  entityId   String
+  diffJson   Json?    // Before/After changes
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  tenant     Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}
+```
+
+---
+
+## 3. Automated Multi-Tenancy Enforcement (Prisma Extension)
+
+To avoid developer error where a query accidentally omits `where: { tenantId }`, WhitraWorks configures a Prisma Client extension using NestJS `AsyncLocalStorage`:
+
+```typescript
+// packages/database/src/client.ts
+import { PrismaClient } from '@prisma/client';
+import { getTenantContext } from './tenant-context';
+
+export function createTenantPrismaClient() {
+  const basePrisma = new PrismaClient();
+
+  return basePrisma.$extends({
+    query: {
+      $allModels: {
+        async $allOperations({ model, operation, args, query }) {
+          const tenantContext = getTenantContext();
+
+          // Models that are tenant-scoped
+          const tenantScopedModels = [
+            'WorkspaceMember',
+            'Role',
+            'Invitation',
+            'TenantCapabilityConfig',
+            'AuditLog',
+          ];
+
+          if (tenantContext?.tenantId && tenantScopedModels.includes(model)) {
+            if (['findUnique', 'findFirst', 'findMany', 'count'].includes(operation)) {
+              args.where = { ...args.where, tenantId: tenantContext.tenantId };
+            }
+            if (['create', 'createMany'].includes(operation)) {
+              if (args.data) {
+                if (Array.isArray(args.data)) {
+                  args.data = args.data.map(d => ({ ...d, tenantId: tenantContext.tenantId }));
+                } else {
+                  args.data = { ...args.data, tenantId: tenantContext.tenantId };
+                }
+              }
+            }
+          }
+
+          return query(args);
+        },
+      },
+    },
+  });
+}
+```
+
+---
+
+## 4. Default System Seed Data
+
+### 4.1 Global Standard Permissions
+* `workspace:read`, `workspace:update`
+* `members:read`, `members:invite`, `members:update`, `members:remove`
+* `roles:read`, `roles:manage`
+* `capabilities:read`
+* `audit:read`
+
+### 4.2 Built-in Workspace Roles (Generated per Tenant)
+1. **`OWNER`**: Assigned all tenant permissions + billing/destructive ownership.
+2. **`ADMIN`**: Assigned all permissions except workspace deletion/ownership transfer.
+3. **`STAFF`**: Default operational role (`workspace:read`, `members:read`, and enabled capability operational permissions).
