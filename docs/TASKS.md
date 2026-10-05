@@ -136,8 +136,8 @@
   * **Description**: Slide-out drawer with toggles for each capability in the registry, enforcing dependency validation.
   * **Acceptance**: Toggling capability writes to backend and live updates tenant configuration.
 
-- [ ] **Task 4.5: Platform Audit Logs & Health Dashboard**
-  * **Files**: `apps/ops-admin/src/pages/AuditLogs.tsx`, `apps/ops-admin/src/pages/Overview.tsx`
+- [x] **Task 4.5: Platform Audit Logs & Health Dashboard**
+  * **Files**: `apps/ops-admin/src/pages/AuditLogs.tsx`, `apps/ops-admin/src/pages/Overview.tsx`, `apps/api/src/modules/ops/ops-platform.controller.ts`, `apps/api/src/modules/ops/dto/list-audit-logs.dto.ts`
   * **Description**: Display platform metrics (total tenants, active, suspended) and searchable audit logs.
   * **Acceptance**: Audit events render accurately with actor and timestamp details.
 
@@ -145,8 +145,8 @@
 
 ## Module 5: Tenant Workspace Admin — Data Plane (`apps/tenant-admin`)
 
-- [ ] **Task 5.1: React + Vite Scaffold for Tenant Admin**
-  * **Files**: `apps/tenant-admin/src/App.tsx`, `apps/tenant-admin/vite.config.ts`
+- [x] **Task 5.1: React + Vite Scaffold for Tenant Admin**
+  * **Files**: `apps/tenant-admin/src/App.tsx`, `apps/tenant-admin/vite.config.ts`, `apps/tenant-admin/tailwind.config.js`, `apps/tenant-admin/src/components/layout/TenantLayout.tsx`, `apps/tenant-admin/src/lib/subdomain.ts`, `apps/tenant-admin/src/context/TenantContext.tsx`
   * **Description**: Scaffold React 19 app configured for `<slug>.whitraworks.com` (or `<slug>.localhost:3000` in dev).
   * **Acceptance**: App renders workspace layout shell and detects current subdomain.
 
