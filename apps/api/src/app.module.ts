@@ -5,9 +5,10 @@ import { TenantResolutionMiddleware } from './common/middleware/tenant-resolutio
 
 import { AuthModule } from './modules/auth/auth.module';
 import { PublicModule } from './modules/public/public.module';
+import { WorkspaceModule } from './modules/workspace/workspace.module';
 
 @Module({
-  imports: [PrismaModule, HealthModule, AuthModule, PublicModule],
+  imports: [PrismaModule, HealthModule, AuthModule, PublicModule, WorkspaceModule],
   controllers: [],
   providers: [],
 })

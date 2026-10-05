@@ -92,23 +92,23 @@
     * Atomic transaction: User + Tenant + Owner membership + Role permissions.
   * **Acceptance**: Existing email returns 409 Conflict with friendly message; new email creates workspace successfully.
 
-- [ ] **Task 3.5: Workspace Memberships & Invitation Lifecycle**
+- [x] **Task 3.5: Workspace Memberships & Invitation Lifecycle**
   * **Files**: `apps/api/src/modules/workspace/members.service.ts`, `apps/api/src/modules/workspace/members.controller.ts`
   * **Description**: Implement member listing, invitation token creation, invitation acceptance, and member deactivation.
   * **Acceptance**: Owners/Admins can invite new staff; invites accept cleanly; owners cannot be removed.
 
-- [ ] **Task 3.6: Multi-Workspace Switcher Endpoint**
-  * **Files**: `apps/api/src/modules/auth/workspace-switch.service.ts`
+- [x] **Task 3.6: Multi-Workspace Switcher Endpoint**
+  * **Files**: `apps/api/src/modules/auth/auth.service.ts`, `apps/api/src/modules/auth/auth.controller.ts`
   * **Description**: Implement `POST /auth/switch-workspace` verifying user has membership in target tenant and returning target redirect URL.
   * **Acceptance**: Returns valid redirect URL for permitted workspaces; rejects unauthorized targets.
 
-- [ ] **Task 3.7: RBAC Guards & Scope Evaluator**
-  * **Files**: `apps/api/src/core/guards/rbac.guard.ts`, `apps/api/src/core/decorators/require-permission.decorator.ts`
+- [x] **Task 3.7: RBAC Guards & Scope Evaluator**
+  * **Files**: `apps/api/src/common/guards/tenant-rbac.guard.ts`, `apps/api/src/common/decorators/require-permission.decorator.ts`
   * **Description**: Deny-by-default permission evaluator with in-memory caching for active member permissions.
   * **Acceptance**: Gated endpoints reject unauthorized members with 403 Forbidden.
 
-- [ ] **Task 3.8: Capability Configuration Engine & Guard**
-  * **Files**: `apps/api/src/core/guards/capability.guard.ts`, `apps/api/src/core/decorators/capability.decorator.ts`
+- [x] **Task 3.8: Capability Configuration Engine & Guard**
+  * **Files**: `apps/api/src/common/guards/capability.guard.ts`, `apps/api/src/common/decorators/require-capability.decorator.ts`
   * **Description**: Decorator `@RequireCapability(code)` and guard verifying the active tenant has the required capability enabled.
   * **Acceptance**: Disabling a capability in DB immediately blocks access to that module's endpoints.
 
