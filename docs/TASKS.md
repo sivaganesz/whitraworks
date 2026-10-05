@@ -7,17 +7,17 @@
 
 ## Module 0: Monorepo Foundation & Tooling Setup
 
-- [x] **Task 0.1: Initialize Monorepo Structure**
+- [ ] **Task 0.1: Initialize Monorepo Structure**
   * **Files**: `package.json`, `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`, `.gitignore`
   * **Description**: Set up `pnpm` workspaces with Turborepo pipeline caching. Configure root scripts (`build`, `dev`, `lint`, `test`, `db:generate`, `db:migrate`).
   * **Acceptance**: `pnpm install` succeeds and `pnpm build` executes via Turborepo.
 
-- [x] **Task 0.2: Configure Shared Tooling & Linter Rules**
+- [ ] **Task 0.2: Configure Shared Tooling & Linter Rules**
   * **Files**: `packages/config/eslint/`, `packages/config/typescript/`
   * **Description**: Enforce strict TypeScript rules (`strict: true`, no unused locals/parameters) and ESLint rules preventing invalid cross-package imports.
   * **Acceptance**: Linter catches cross-package import violations.
 
-- [x] **Task 0.3: Local Infrastructure Setup via Docker Compose**
+- [ ] **Task 0.3: Local Infrastructure Setup via Docker Compose**
   * **Files**: `docker-compose.yml`, `.env.example`
   * **Description**: Provide PostgreSQL 16 and Redis 7 local development services with persistent volumes and health checks.
   * **Acceptance**: `docker compose up -d` brings up healthy PostgreSQL and Redis containers.
