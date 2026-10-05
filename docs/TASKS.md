@@ -126,7 +126,7 @@
   * **Description**: Login form for Root Superadmins. Protected route verifying `isPlatformSuperadmin == true`.
   * **Acceptance**: Non-superadmin accounts are rejected with unauthorized error; superadmin session verified and protected routes render cleanly.
 
-- [ ] **Task 4.3: Tenant Directory & Status Lifecycle Management**
+- [x] **Task 4.3: Tenant Directory & Status Lifecycle Management**
   * **Files**: `apps/ops-admin/src/pages/TenantsList.tsx`, `apps/ops-admin/src/components/TenantStatusModal.tsx`
   * **Description**: Paginated table of all tenants. Actions to activate, suspend, or reactivate with audit note prompt.
   * **Acceptance**: Toggling status sends API request, updates table, and creates audit log.

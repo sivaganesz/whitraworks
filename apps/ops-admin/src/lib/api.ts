@@ -80,3 +80,66 @@ export const authApi = {
     });
   },
 };
+
+export interface TenantListItem {
+  id: string;
+  name: string;
+  slug: string;
+  status: 'PROVISIONING' | 'ACTIVE' | 'SUSPENDED' | 'TERMINATED';
+  currency: string;
+  timezone: string;
+  createdAt: string;
+  updatedAt: string;
+  memberCount: number;
+  activeCapabilitiesCount: number;
+}
+
+export interface TenantListResponse {
+  tenants: TenantListItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface TenantStatusUpdateResult {
+  success: boolean;
+  message: string;
+  tenant: {
+    id: string;
+    status: 'ACTIVE' | 'SUSPENDED';
+    slug: string;
+    name: string;
+  };
+}
+
+export const opsApi = {
+  getTenants: async (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+  }): Promise<TenantListResponse> => {
+    const query = new URLSearchParams();
+    if (params?.page) query.set('page', params.page.toString());
+    if (params?.limit) query.set('limit', params.limit.toString());
+    if (params?.search) query.set('search', params.search);
+    if (params?.status && params.status !== 'ALL') query.set('status', params.status);
+
+    const qs = query.toString();
+    return fetchApi<TenantListResponse>(`/ops/tenants${qs ? `?${qs}` : ''}`, {
+      method: 'GET',
+    });
+  },
+
+  updateTenantStatus: async (
+    id: string,
+    payload: { status: 'ACTIVE' | 'SUSPENDED'; reason: string }
+  ): Promise<TenantStatusUpdateResult> => {
+    return fetchApi<TenantStatusUpdateResult>(`/ops/tenants/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  },
+};
+
