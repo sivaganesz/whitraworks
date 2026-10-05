@@ -26,22 +26,22 @@
 
 ## Module 1: Database & Data Modeling (`packages/database`)
 
-- [ ] **Task 1.1: Prisma Schema Implementation**
+- [x] **Task 1.1: Prisma Schema Implementation**
   * **Files**: `packages/database/prisma/schema.prisma`
   * **Description**: Implement models: `User`, `Tenant`, `WorkspaceMember`, `Role`, `Permission`, `RolePermission`, `Invitation`, `TenantCapabilityConfig`, and `AuditLog` per `docs/DATA_MODEL.md`.
   * **Acceptance**: `pnpm --filter @whitraworks/database prisma validate` passes.
 
-- [ ] **Task 1.2: Initial Migration & Index Verification**
+- [x] **Task 1.2: Initial Migration & Index Verification**
   * **Files**: `packages/database/prisma/migrations/`
   * **Description**: Generate initial migration SQL. Verify unique indexes on `users.email`, `tenants.slug`, and compound unique index `[tenantId, userId]`.
   * **Acceptance**: Migration applies cleanly against local PostgreSQL.
 
-- [ ] **Task 1.3: Prisma Client Extension for Tenant Isolation**
+- [x] **Task 1.3: Prisma Client Extension for Tenant Isolation**
   * **Files**: `packages/database/src/tenant-extension.ts`, `packages/database/src/client.ts`
   * **Description**: Implement Prisma `$extends` query hook that injects `where: { tenantId }` automatically on tenant-scoped operations using AsyncLocalStorage.
   * **Acceptance**: Unit test confirms queries without manual `tenantId` are automatically scoped.
 
-- [ ] **Task 1.4: Database Seeder Script**
+- [x] **Task 1.4: Database Seeder Script**
   * **Files**: `packages/database/prisma/seed.ts`
   * **Description**: Seed standard platform permissions, default system roles (`OWNER`, `ADMIN`, `STAFF`), and the initial Root Superadmin account.
   * **Acceptance**: `pnpm db:seed` populates PostgreSQL with clean baseline data.
