@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { opsApi, type TenantListItem } from '../lib/api';
 import { TenantStatusModal } from '../components/TenantStatusModal';
+import { CapabilityManagerDrawer } from '../components/CapabilityManagerDrawer';
 
 type StatusFilter = 'ALL' | 'ACTIVE' | 'SUSPENDED' | 'PROVISIONING';
 
@@ -28,6 +29,10 @@ export function TenantsListPage() {
   // Status modal state
   const [selectedTenant, setSelectedTenant] = useState<TenantListItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Capability drawer state
+  const [selectedCapabilityTenant, setSelectedCapabilityTenant] = useState<TenantListItem | null>(null);
+  const [isCapabilityDrawerOpen, setIsCapabilityDrawerOpen] = useState(false);
 
   const loadTenants = useCallback(async () => {
     setIsLoading(true);
@@ -55,6 +60,11 @@ export function TenantsListPage() {
   const handleOpenStatusModal = (tenant: TenantListItem) => {
     setSelectedTenant(tenant);
     setIsModalOpen(true);
+  };
+
+  const handleOpenCapabilityDrawer = (tenant: TenantListItem) => {
+    setSelectedCapabilityTenant(tenant);
+    setIsCapabilityDrawerOpen(true);
   };
 
   const getStatusBadge = (status: TenantListItem['status']) => {
@@ -269,8 +279,9 @@ export function TenantsListPage() {
                           <Button
                             variant="outline"
                             size="sm"
+                            onClick={() => handleOpenCapabilityDrawer(tenant)}
                             className="flex items-center gap-1.5 text-xs h-8 text-zinc-700 dark:text-zinc-300"
-                            title="Manage tenant capabilities (Task 4.4)"
+                            title="Manage tenant capabilities"
                           >
                             <SlidersHorizontal className="w-3.5 h-3.5" />
                             Capabilities
@@ -323,6 +334,14 @@ export function TenantsListPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         tenant={selectedTenant}
+        onSuccess={() => loadTenants()}
+      />
+
+      {/* Capability Manager Drawer */}
+      <CapabilityManagerDrawer
+        isOpen={isCapabilityDrawerOpen}
+        onClose={() => setIsCapabilityDrawerOpen(false)}
+        tenant={selectedCapabilityTenant}
         onSuccess={() => loadTenants()}
       />
     </div>

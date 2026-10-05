@@ -2,7 +2,9 @@ import { Injectable, NotFoundException, BadRequestException, Inject } from '@nes
 import { PrismaService } from '../prisma/prisma.service';
 import { ListTenantsDto } from './dto/list-tenants.dto';
 import { UpdateTenantStatusDto } from './dto/update-tenant-status.dto';
+import { UpdateTenantCapabilitiesDto } from './dto/update-tenant-capabilities.dto';
 import { TenantStatus, Prisma } from '@whitraworks/database';
+import { CAPABILITY_REGISTRY } from '@whitraworks/types';
 
 @Injectable()
 export class OpsTenantsService {
@@ -133,4 +135,145 @@ export class OpsTenantsService {
       tenant: updated,
     };
   }
+
+  async getTenantCapabilities(tenantId: string) {
+    const tenant = await this.prisma.base.tenant.findUnique({
+      where: { id: tenantId },
+    });
+
+    if (!tenant) {
+      throw new NotFoundException({
+        code: 'TENANT_NOT_FOUND',
+        message: `Tenant with ID ${tenantId} was not found.`,
+      });
+    }
+
+    const configs = await this.prisma.base.tenantCapabilityConfig.findMany({
+      where: { tenantId },
+    });
+
+    const configMap = new Map(configs.map((c) => [c.capabilityCode, c.isEnabled]));
+
+    const capabilities = Object.values(CAPABILITY_REGISTRY).map((def) => ({
+      code: def.code,
+      name: def.name,
+      description: def.description,
+      category: def.category,
+      dependencies: def.dependencies,
+      isEnabled: configMap.has(def.code) ? configMap.get(def.code)! : def.defaultEnabled,
+    }));
+
+    return {
+      tenantId,
+      capabilities,
+    };
+  }
+
+  async updateTenantCapabilities(
+    tenantId: string,
+    dto: UpdateTenantCapabilitiesDto,
+    actorId: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ) {
+    const tenant = await this.prisma.base.tenant.findUnique({
+      where: { id: tenantId },
+    });
+
+    if (!tenant) {
+      throw new NotFoundException({
+        code: 'TENANT_NOT_FOUND',
+        message: `Tenant with ID ${tenantId} was not found.`,
+      });
+    }
+
+    // 1. Validate capability codes against registry
+    for (const code of Object.keys(dto.capabilities)) {
+      if (!CAPABILITY_REGISTRY[code]) {
+        throw new BadRequestException({
+          code: 'UNKNOWN_CAPABILITY',
+          message: `Unknown capability code "${code}".`,
+        });
+      }
+    }
+
+    // 2. Fetch current configurations to compute projected state
+    const currentConfigs = await this.prisma.base.tenantCapabilityConfig.findMany({
+      where: { tenantId },
+    });
+    const stateMap: Record<string, boolean> = {};
+    for (const def of Object.values(CAPABILITY_REGISTRY)) {
+      stateMap[def.code] = def.defaultEnabled;
+    }
+    for (const cfg of currentConfigs) {
+      stateMap[cfg.capabilityCode] = cfg.isEnabled;
+    }
+
+    // Apply incoming changes
+    for (const [code, isEnabled] of Object.entries(dto.capabilities)) {
+      stateMap[code] = Boolean(isEnabled);
+    }
+
+    // 3. Enforce Golden Rule 3: Capability Engine Dependency Validation
+    for (const [code, isEnabled] of Object.entries(stateMap)) {
+      if (isEnabled) {
+        const def = CAPABILITY_REGISTRY[code];
+        if (def && def.dependencies) {
+          for (const dep of def.dependencies) {
+            if (!stateMap[dep]) {
+              const depName = CAPABILITY_REGISTRY[dep]?.name || dep;
+              throw new BadRequestException({
+                code: 'CAPABILITY_DEPENDENCY_ERROR',
+                message: `Cannot enable "${def.name}" (${code}) because required dependency "${depName}" (${dep}) is not enabled.`,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // 4. Atomic transaction updating database and logging audit event
+    await this.prisma.base.$transaction(async (tx) => {
+      for (const [code, isEnabled] of Object.entries(dto.capabilities)) {
+        await tx.tenantCapabilityConfig.upsert({
+          where: {
+            tenantId_capabilityCode: {
+              tenantId,
+              capabilityCode: code,
+            },
+          },
+          create: {
+            tenantId,
+            capabilityCode: code,
+            isEnabled,
+          },
+          update: {
+            isEnabled,
+          },
+        });
+      }
+
+      await tx.auditLog.create({
+        data: {
+          tenantId,
+          actorId,
+          action: 'tenant.capabilities.update',
+          entityType: 'Capability',
+          entityId: tenantId,
+          diffJson: {
+            updatedCapabilities: dto.capabilities,
+          },
+          ipAddress: ipAddress ?? null,
+          userAgent: userAgent ?? null,
+        },
+      });
+    });
+
+    return {
+      success: true,
+      message: 'Tenant capabilities updated successfully.',
+      data: await this.getTenantCapabilities(tenantId),
+    };
+  }
 }
+

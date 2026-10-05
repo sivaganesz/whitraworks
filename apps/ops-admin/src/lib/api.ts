@@ -141,5 +141,39 @@ export const opsApi = {
       body: JSON.stringify(payload),
     });
   },
+
+  getTenantCapabilities: async (tenantId: string): Promise<TenantCapabilitiesResponse> => {
+    return fetchApi<TenantCapabilitiesResponse>(`/ops/tenants/${tenantId}/capabilities`, {
+      method: 'GET',
+    });
+  },
+
+  updateTenantCapabilities: async (
+    tenantId: string,
+    capabilities: Record<string, boolean>
+  ): Promise<{ success: boolean; message: string; data: TenantCapabilitiesResponse }> => {
+    return fetchApi<{ success: boolean; message: string; data: TenantCapabilitiesResponse }>(
+      `/ops/tenants/${tenantId}/capabilities`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ capabilities }),
+      }
+    );
+  },
 };
+
+export interface CapabilityItem {
+  code: string;
+  name: string;
+  description: string;
+  category: 'core' | 'operations' | 'fulfillment' | 'intelligence';
+  dependencies: string[];
+  isEnabled: boolean;
+}
+
+export interface TenantCapabilitiesResponse {
+  tenantId: string;
+  capabilities: CapabilityItem[];
+}
+
 

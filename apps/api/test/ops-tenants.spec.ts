@@ -241,4 +241,101 @@ describe('Ops Tenants Directory & Status Lifecycle (e2e)', () => {
       expect(res.body.error.code).toBe('TENANT_NOT_FOUND');
     });
   });
+
+  describe('3. Tenant Capability Management (GET & PUT /ops/tenants/:id/capabilities)', () => {
+    it('rejects unauthenticated capability inspection with 401', async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/ops/tenants/${testTenantId}/capabilities`)
+        .set('Host', 'ops.localhost:4000');
+
+      expect(res.status).toBe(401);
+    });
+
+    it('returns all registry capabilities with status for platform superadmin', async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/ops/tenants/${testTenantId}/capabilities`)
+        .set('Host', 'ops.localhost:4000')
+        .set('Cookie', superadminCookie);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.tenantId).toBe(testTenantId);
+      expect(Array.isArray(res.body.data.capabilities)).toBe(true);
+
+      const catalogCap = res.body.data.capabilities.find((c: any) => c.code === 'catalog');
+      expect(catalogCap).toBeDefined();
+      expect(catalogCap.name).toBe('Product & Menu Catalog');
+      expect(catalogCap.isEnabled).toBe(true);
+    });
+
+    it('rejects enabling a capability when its dependencies are not satisfied (Golden Rule 3)', async () => {
+      // kitchen requires orders, let's try enabling kitchen while explicitly setting orders to false
+      const res = await request(app.getHttpServer())
+        .put(`/ops/tenants/${testTenantId}/capabilities`)
+        .set('Host', 'ops.localhost:4000')
+        .set('Cookie', superadminCookie)
+        .send({
+          capabilities: {
+            orders: false,
+            kitchen: true,
+          },
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('CAPABILITY_DEPENDENCY_ERROR');
+    });
+
+    it('rejects updating with unknown capability codes with 400', async () => {
+      const res = await request(app.getHttpServer())
+        .put(`/ops/tenants/${testTenantId}/capabilities`)
+        .set('Host', 'ops.localhost:4000')
+        .set('Cookie', superadminCookie)
+        .send({
+          capabilities: {
+            teleportation: true,
+          },
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('UNKNOWN_CAPABILITY');
+    });
+
+    it('successfully enables valid capabilities and records audit log', async () => {
+      const res = await request(app.getHttpServer())
+        .put(`/ops/tenants/${testTenantId}/capabilities`)
+        .set('Host', 'ops.localhost:4000')
+        .set('Cookie', superadminCookie)
+        .send({
+          capabilities: {
+            catalog: true,
+            orders: true,
+            kitchen: true,
+          },
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.tenantId).toBe(testTenantId);
+
+      // Verify DB record in TenantCapabilityConfig
+      const kitchenConfig = await prisma.base.tenantCapabilityConfig.findUnique({
+        where: {
+          tenantId_capabilityCode: {
+            tenantId: testTenantId,
+            capabilityCode: 'kitchen',
+          },
+        },
+      });
+      expect(kitchenConfig?.isEnabled).toBe(true);
+
+      // Verify Audit Log
+      const auditLog = await prisma.base.auditLog.findFirst({
+        where: {
+          tenantId: testTenantId,
+          action: 'tenant.capabilities.update',
+        },
+      });
+      expect(auditLog).toBeDefined();
+      expect(auditLog?.actorId).toBe(superadminId);
+    });
+  });
 });

@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Patch,
+  Put,
   Param,
   Body,
   Query,
@@ -17,6 +18,7 @@ import { RequestWithTenant } from '../../common/middleware/tenant-resolution.mid
 import { OpsTenantsService } from './ops-tenants.service';
 import { ListTenantsDto } from './dto/list-tenants.dto';
 import { UpdateTenantStatusDto } from './dto/update-tenant-status.dto';
+import { UpdateTenantCapabilitiesDto } from './dto/update-tenant-capabilities.dto';
 
 @ApiTags('Ops Tenants')
 @ApiBearerAuth()
@@ -49,5 +51,30 @@ export class OpsTenantsController {
     const userAgent = req.headers['user-agent'];
 
     return this.opsTenantsService.updateStatus(id, dto, actorId, ipAddress, userAgent);
+  }
+
+  @Get(':id/capabilities')
+  @ApiOperation({ summary: 'Get current capability configurations for a tenant' })
+  @ApiResponse({ status: 200, description: 'Tenant capabilities with registry metadata' })
+  @ApiResponse({ status: 404, description: 'Tenant not found' })
+  async getTenantCapabilities(@Param('id') id: string) {
+    return this.opsTenantsService.getTenantCapabilities(id);
+  }
+
+  @Put(':id/capabilities')
+  @ApiOperation({ summary: 'Update tenant capability enablement with dependency enforcement and audit logging' })
+  @ApiResponse({ status: 200, description: 'Tenant capabilities successfully updated' })
+  @ApiResponse({ status: 400, description: 'Dependency violation or unknown capability' })
+  @ApiResponse({ status: 404, description: 'Tenant not found' })
+  async updateTenantCapabilities(
+    @Param('id') id: string,
+    @Body() dto: UpdateTenantCapabilitiesDto,
+    @Req() req: RequestWithTenant & AuthenticatedRequest,
+  ) {
+    const actorId = req.user?.userId || 'unknown-actor';
+    const ipAddress = req.ip || (req.headers['x-forwarded-for'] as string);
+    const userAgent = req.headers['user-agent'];
+
+    return this.opsTenantsService.updateTenantCapabilities(id, dto, actorId, ipAddress, userAgent);
   }
 }

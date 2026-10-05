@@ -131,7 +131,7 @@
   * **Description**: Paginated table of all tenants. Actions to activate, suspend, or reactivate with audit note prompt.
   * **Acceptance**: Toggling status sends API request, updates table, and creates audit log.
 
-- [ ] **Task 4.4: Tenant Capability Management Drawer**
+- [x] **Task 4.4: Tenant Capability Management Drawer**
   * **Files**: `apps/ops-admin/src/components/CapabilityManagerDrawer.tsx`
   * **Description**: Slide-out drawer with toggles for each capability in the registry, enforcing dependency validation.
   * **Acceptance**: Toggling capability writes to backend and live updates tenant configuration.
