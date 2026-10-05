@@ -7,28 +7,27 @@
 
 ## 0. Strict Agent Execution & Permission Protocol
 
-This permission protocol is strict, non-negotiable, and must always be followed at all times.
+This permission protocol is strict, non-negotiable, and must always be followed at all times:
 
-### 🔴 EXPLICIT PERMISSION REQUIRED (ONLY 2 CASES)
-You must **ONLY** ask for user permission before executing:
-1. **`git commit` and `git push`**:
-   * Never execute `git commit` or `git push` autonomously.
-   * Always present the staged changes and wait for explicit approval before committing or pushing.
-2. **System-Level & External Operations**:
-   * Any system-level update or global machine configuration change.
-   * Creating, modifying, or reading anything outside the project workspace folder (`e:\PROJECTS\whitraworks`).
+1. **Git Commit & Push (Explicit Permission Required)**:
+   * **ONLY ask for user permission before running `git commit` and `git push`.**
+   * Never execute `git commit` or `git push` autonomously. Always present the changes and ask for your approval first.
+   * For read-only and staging Git commands—such as `git show`, `git diff`, `git status`, `git log`, `git add`, and `git add .`—**do NOT ask for permission**; execute them autonomously as needed.
 
----
+2. **Autonomous Project Operations (DO NOT Ask for Permission)**:
+   * For all internal development actions inside the project directory, **proceed autonomously without asking for permission**:
+     * Staging and inspecting git changes (`git show`, `git diff`, `git status`, `git log`, `git add`, `git add .`).
+     * Creating, editing, or deleting project files.
+     * Creating folders and directory structures.
+     * Installing, updating, or removing dependencies (`pnpm add`, `pnpm install`).
+     * Running builds, linters, compilers, and test suites (`pnpm build`, `pnpm test`).
+     * Executing database schema generations, Prisma migrations, and seed scripts.
+     * Launching or stopping local Docker services (`docker compose up -d`).
 
-### 🟢 PROCEED AUTONOMOUSLY (DO NOT ASK FOR PERMISSION)
-For **EVERYTHING ELSE** inside the project workspace directory, proceed autonomously without asking for permission. This includes, but is not limited to:
-* **All Staging & Read-Only Git Operations**: `git show`, `git diff`, `git status`, `git log`, `git add`, `git add .`, `git restore`, etc.
-* **Package Management**: `pnpm add`, `pnpm install`, `pnpm remove`, updating dependencies and lockfiles.
-* **Local Docker Infrastructure**: `docker compose up -d`, `docker compose down`, `docker ps`, viewing container logs, etc.
-* **File & Directory Operations**: Creating, editing, renaming, moving, or deleting any project files or directories.
-* **Builds, Linters, Compilers & Tests**: `pnpm build`, `turbo build`, `pnpm test`, `vitest run`, typechecks, linters, etc.
-* **Database Operations**: Prisma schema migrations (`prisma migrate dev`), client generation (`prisma generate`), database seeding (`pnpm db:seed`), and schema validations.
-* **Task Tracking**: Updating `TASKS.md` and `PROGRESS.md` as modules progress.
+3. **System-Level & External Operations (Explicit Permission Required)**:
+   * **Always ask for user permission first** before:
+     * Any system-level update or global configuration change.
+     * Creating, modifying, or reading anything outside the project workspace directory (`e:\PROJECTS\whitraworks`).
 
 ---
 

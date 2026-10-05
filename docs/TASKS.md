@@ -50,17 +50,17 @@
 
 ## Module 2: Shared Contracts & Libraries (`packages/types`, `packages/ui`)
 
-- [ ] **Task 2.1: Shared TypeScript Interfaces & DTOs**
+- [x] **Task 2.1: Shared TypeScript Interfaces & DTOs**
   * **Files**: `packages/types/src/index.ts`, `packages/types/src/user.ts`, `packages/types/src/tenant.ts`, `packages/types/src/capabilities.ts`
   * **Description**: Export all core interfaces, API response envelopes, error codes, and the Global Capability Registry.
   * **Acceptance**: Types compile cleanly and are importable by apps and backend.
 
-- [ ] **Task 2.2: Zod Validation Schemas**
+- [x] **Task 2.2: Zod Validation Schemas**
   * **Files**: `packages/types/src/validators/`
   * **Description**: Export Zod schemas for public registration, login, member invitation, tenant profile update, and slug format checks.
   * **Acceptance**: Validation tests pass for valid and invalid payloads.
 
-- [ ] **Task 2.3: Shared UI Component Library Foundation**
+- [x] **Task 2.3: Shared UI Component Library Foundation**
   * **Files**: `packages/ui/src/components/`
   * **Description**: Scaffold reusable accessible components: `Button`, `Input`, `Dialog`, `DataTable`, `Badge`, `DropdownMenu`, `Toast`.
   * **Acceptance**: Storybook / smoke tests verify components render correctly with Tailwind styles.

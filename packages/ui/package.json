@@ -5,6 +5,9 @@
   "description": "Shared UI component library for WhitraWorks frontends",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc"
+  },
   "dependencies": {
     "clsx": "^2.1.1",
     "lucide-react": "^1.16.0",

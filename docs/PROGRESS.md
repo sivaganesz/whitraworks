@@ -13,8 +13,8 @@
 | **Phase 0** | **System Specifications & Documentation** | **COMPLETED** | **100%** | All 10 specification `.md` files drafted & validated in `docs/`. |
 | **Module 0** | **Monorepo Foundation & Dev Tooling** | **COMPLETED** | **100%** | `pnpm` workspaces, Turborepo, shared tsconfig/eslint, docker-compose. |
 | **Module 1** | **Database & Data Modeling** | **COMPLETED** | **100%** | Prisma schema, migration applied, tenant isolation extension, seed script. |
-| **Module 2** | **Shared Contracts & Libraries** | **READY TO START** | **0%** | `@whitraworks/types`, Zod schemas, `@whitraworks/ui` components. |
-| **Module 3** | **Multi-Tenant Backend Core (`apps/api`)** | Pending | 0% | Subdomain middleware, Argon2 auth, collision guards, RBAC, capabilities. |
+| **Module 2** | **Shared Contracts & Libraries** | **COMPLETED** | **100%** | `@whitraworks/types` (DTOs, error codes, Zod schemas), `@whitraworks/ui` components. |
+| **Module 3** | **Multi-Tenant Backend Core (`apps/api`)** | **READY TO START** | **0%** | Subdomain middleware, Argon2 auth, collision guards, RBAC, capabilities. |
 | **Module 4** | **Root Parent Admin UI (`apps/ops-admin`)** | Pending | 0% | Control plane on `ops.whitraworks.com`, tenant management, capability drawer. |
 | **Module 5** | **Tenant Workspace Admin UI (`apps/tenant-admin`)** | Pending | 0% | Data plane on `<slug>.whitraworks.com`, switcher, members, dynamic nav. |
 | **Module 6** | **E2E Verification & Integration Testing** | Pending | 0% | Cross-tenant negative security tests, local subdomain verification. |
