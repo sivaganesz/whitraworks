@@ -69,12 +69,12 @@
 
 ## Module 3: Multi-Tenant Backend Core (`apps/api`)
 
-- [ ] **Task 3.1: NestJS Application Scaffold**
+- [x] **Task 3.1: NestJS Application Scaffold**
   * **Files**: `apps/api/src/main.ts`, `apps/api/src/app.module.ts`
   * **Description**: Initialize NestJS with CORS, cookie parser, global validation pipes (Zod), and structured JSON logging.
   * **Acceptance**: Server starts at port 4000; `GET /health` returns 200 OK.
 
-- [ ] **Task 3.2: Subdomain Resolution Middleware & AsyncLocalStorage**
+- [x] **Task 3.2: Subdomain Resolution Middleware & AsyncLocalStorage**
   * **Files**: `apps/api/src/core/middleware/tenant-resolution.middleware.ts`, `apps/api/src/core/context/tenant-context.ts`
   * **Description**: Extract `Host` header, resolve tenant from Redis cache/PostgreSQL, validate active status, and store in AsyncLocalStorage.
   * **Acceptance**: Valid subdomains attach context; unknown or suspended subdomains return 404 / 403.
