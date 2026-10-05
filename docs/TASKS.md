@@ -121,10 +121,10 @@
   * **Description**: Scaffold React 19 app configured for `ops.whitraworks.com` (or `ops.localhost:3001` in dev).
   * **Acceptance**: Dev server starts and renders dark- and light-themed platform layout shell with ThemeProvider.
 
-- [ ] **Task 4.2: Superadmin Authentication & Protected Routes**
-  * **Files**: `apps/ops-admin/src/pages/Login.tsx`, `apps/ops-admin/src/components/ProtectedRoute.tsx`
+- [x] **Task 4.2: Superadmin Authentication & Protected Routes**
+  * **Files**: `apps/ops-admin/src/pages/Login.tsx`, `apps/ops-admin/src/components/ProtectedRoute.tsx`, `apps/ops-admin/src/context/AuthContext.tsx`, `apps/ops-admin/src/lib/api.ts`
   * **Description**: Login form for Root Superadmins. Protected route verifying `isPlatformSuperadmin == true`.
-  * **Acceptance**: Non-superadmin accounts are rejected with unauthorized error.
+  * **Acceptance**: Non-superadmin accounts are rejected with unauthorized error; superadmin session verified and protected routes render cleanly.
 
 - [ ] **Task 4.3: Tenant Directory & Status Lifecycle Management**
   * **Files**: `apps/ops-admin/src/pages/TenantsList.tsx`, `apps/ops-admin/src/components/TenantStatusModal.tsx`
