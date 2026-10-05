@@ -15,7 +15,7 @@
 | **Module 1** | **Database & Data Modeling** | **COMPLETED** | **100%** | Prisma schema, migration applied, tenant isolation extension, seed script. |
 | **Module 2** | **Shared Contracts & Libraries** | **COMPLETED** | **100%** | `@whitraworks/types` (DTOs, error codes, Zod schemas), `@whitraworks/ui` components. |
 | **Module 3** | **Multi-Tenant Backend Core (`apps/api`)** | **COMPLETED** | **100%** | Scaffold, subdomain tenant middleware, Argon2id auth, atomic registration, workspace memberships, invitation lifecycle, switcher, RBAC guards, and Capability engine guards. |
-| **Module 4** | **Root Parent Admin UI (`apps/ops-admin`)** | Pending | 0% | Control plane on `ops.whitraworks.com`, tenant management, capability drawer. |
+| **Module 4** | **Root Parent Admin UI (`apps/ops-admin`)** | **IN PROGRESS** | **20%** | Task 4.1 completed: React 19 + Vite scaffold, ThemeProvider (light/dark monochrome), OpsLayout platform shell. Next: Superadmin auth. |
 | **Module 5** | **Tenant Workspace Admin UI (`apps/tenant-admin`)** | Pending | 0% | Data plane on `<slug>.whitraworks.com`, switcher, members, dynamic nav. |
 | **Module 6** | **E2E Verification & Integration Testing** | Pending | 0% | Cross-tenant negative security tests, local subdomain verification. |
 

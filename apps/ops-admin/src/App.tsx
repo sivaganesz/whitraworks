@@ -1,10 +1,33 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from '@whitraworks/ui';
+import { OpsLayout } from './components/layout/OpsLayout';
+import { OverviewPage } from './pages/Overview';
+import { TenantsListPage } from './pages/TenantsList';
+import { AuditLogsPage } from './pages/AuditLogs';
+import { LoginPage } from './pages/Login';
+
 export function App() {
   return (
-    <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h1>WhitraWorks Root Parent Admin (TenantOps)</h1>
-      <p>Host: ops.whitraworks.com</p>
-    </div>
+    <ThemeProvider defaultTheme="system" storageKey="whitraworks_ops_theme">
+      <BrowserRouter>
+        <Routes>
+          {/* Public Authentication Route */}
+          <Route path="/login" element={<LoginPage />} />
+
+          {/* Ops Admin Control Plane Shell */}
+          <Route path="/" element={<OpsLayout />}>
+            <Route index element={<OverviewPage />} />
+            <Route path="tenants" element={<TenantsListPage />} />
+            <Route path="audit-logs" element={<AuditLogsPage />} />
+            <Route path="health" element={<OverviewPage />} />
+          </Route>
+
+          {/* Catch-all fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
-export default App;
 
+export default App;

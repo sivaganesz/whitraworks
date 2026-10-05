@@ -116,10 +116,10 @@
 
 ## Module 4: Root Parent Admin — Control Plane (`apps/ops-admin`)
 
-- [ ] **Task 4.1: React + Vite Scaffold for Ops Admin**
-  * **Files**: `apps/ops-admin/src/App.tsx`, `apps/ops-admin/vite.config.ts`
+- [x] **Task 4.1: React + Vite Scaffold for Ops Admin**
+  * **Files**: `apps/ops-admin/src/App.tsx`, `apps/ops-admin/vite.config.ts`, `apps/ops-admin/tailwind.config.js`, `apps/ops-admin/src/components/layout/OpsLayout.tsx`
   * **Description**: Scaffold React 19 app configured for `ops.whitraworks.com` (or `ops.localhost:3001` in dev).
-  * **Acceptance**: Dev server starts and renders dark-themed platform layout shell.
+  * **Acceptance**: Dev server starts and renders dark- and light-themed platform layout shell with ThemeProvider.
 
 - [ ] **Task 4.2: Superadmin Authentication & Protected Routes**
   * **Files**: `apps/ops-admin/src/pages/Login.tsx`, `apps/ops-admin/src/components/ProtectedRoute.tsx`
