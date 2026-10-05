@@ -79,12 +79,12 @@
   * **Description**: Extract `Host` header, resolve tenant from Redis cache/PostgreSQL, validate active status, and store in AsyncLocalStorage.
   * **Acceptance**: Valid subdomains attach context; unknown or suspended subdomains return 404 / 403.
 
-- [ ] **Task 3.3: Authentication Module & Password Hashing**
+- [x] **Task 3.3: Authentication Module & Password Hashing**
   * **Files**: `apps/api/src/modules/auth/auth.service.ts`, `apps/api/src/modules/auth/auth.controller.ts`
   * **Description**: Implement Argon2id password hashing, credential verification, and host-scoped HttpOnly cookie issuance (`POST /auth/login`, `POST /auth/logout`).
   * **Acceptance**: Login issues correct host-scoped cookie; logout clears it.
 
-- [ ] **Task 3.4: Public Registration with Collision Guards**
+- [x] **Task 3.4: Public Registration with Collision Guards**
   * **Files**: `apps/api/src/modules/public/public.service.ts`, `apps/api/src/modules/public/public.controller.ts`
   * **Description**: Implement `POST /public/register`:
     * Enforce email collision rule (direct to existing workspace slug).

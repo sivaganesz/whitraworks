@@ -3,8 +3,11 @@ import { PrismaModule } from './modules/prisma/prisma.module';
 import { HealthModule } from './modules/health/health.module';
 import { TenantResolutionMiddleware } from './common/middleware/tenant-resolution.middleware';
 
+import { AuthModule } from './modules/auth/auth.module';
+import { PublicModule } from './modules/public/public.module';
+
 @Module({
-  imports: [PrismaModule, HealthModule],
+  imports: [PrismaModule, HealthModule, AuthModule, PublicModule],
   controllers: [],
   providers: [],
 })
