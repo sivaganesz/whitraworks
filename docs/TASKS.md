@@ -145,13 +145,13 @@
 
 ## Module 5: Tenant Workspace Admin — Data Plane (`apps/tenant-admin`)
 
-- [x] **Task 5.1: React + Vite Scaffold for Tenant Admin**
-  * **Files**: `apps/tenant-admin/src/App.tsx`, `apps/tenant-admin/vite.config.ts`, `apps/tenant-admin/tailwind.config.js`, `apps/tenant-admin/src/components/layout/TenantLayout.tsx`, `apps/tenant-admin/src/lib/subdomain.ts`, `apps/tenant-admin/src/context/TenantContext.tsx`
+- [ ] **Task 5.1: React + Vite Scaffold for Tenant Admin**
+  * **Files**: `apps/tenant-admin/src/App.tsx`, `apps/tenant-admin/vite.config.ts`
   * **Description**: Scaffold React 19 app configured for `<slug>.whitraworks.com` (or `<slug>.localhost:3000` in dev).
   * **Acceptance**: App renders workspace layout shell and detects current subdomain.
 
-- [ ] **Task 5.2: Tenant Authentication & Workspace Switcher**
-  * **Files**: `apps/tenant-admin/src/pages/Login.tsx`, `apps/tenant-admin/src/components/WorkspaceSwitcher.tsx`
+- [x] **Task 5.2: Tenant Authentication & Workspace Switcher**
+  * **Files**: `apps/tenant-admin/src/pages/Login.tsx`, `apps/tenant-admin/src/components/WorkspaceSwitcher.tsx`, `apps/tenant-admin/src/context/AuthContext.tsx`, `apps/tenant-admin/src/lib/api.ts`, `apps/tenant-admin/src/components/ProtectedRoute.tsx`
   * **Description**: Login page and top-header workspace switcher displaying user's available business workspaces.
   * **Acceptance**: Selecting another workspace navigates to the target subdomain.
 
