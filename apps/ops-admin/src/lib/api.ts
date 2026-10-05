@@ -160,6 +160,27 @@ export const opsApi = {
       }
     );
   },
+
+  getOverviewMetrics: async (): Promise<OverviewMetricsResponse> => {
+    return fetchApi<OverviewMetricsResponse>('/ops/overview', {
+      method: 'GET',
+    });
+  },
+
+  getAuditLogs: async (params?: AuditLogsQuery): Promise<AuditLogsResponse> => {
+    const query = new URLSearchParams();
+    if (params?.page) query.set('page', params.page.toString());
+    if (params?.limit) query.set('limit', params.limit.toString());
+    if (params?.action && params.action !== 'ALL') query.set('action', params.action);
+    if (params?.entityType && params.entityType !== 'ALL') query.set('entityType', params.entityType);
+    if (params?.search) query.set('search', params.search);
+    if (params?.tenantId) query.set('tenantId', params.tenantId);
+
+    const qs = query.toString();
+    return fetchApi<AuditLogsResponse>(`/ops/audit-logs${qs ? `?${qs}` : ''}`, {
+      method: 'GET',
+    });
+  },
 };
 
 export interface CapabilityItem {
@@ -174,6 +195,71 @@ export interface CapabilityItem {
 export interface TenantCapabilitiesResponse {
   tenantId: string;
   capabilities: CapabilityItem[];
+}
+
+export interface OverviewMetrics {
+  totalTenants: number;
+  activeTenants: number;
+  suspendedTenants: number;
+  provisioningTenants: number;
+  totalUsers: number;
+  totalMembers: number;
+}
+
+export interface SystemHealth {
+  database: string;
+  redis: string;
+  controlPlane: string;
+}
+
+export interface AuditLogActor {
+  id: string;
+  email: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  isPlatformSuperadmin?: boolean;
+}
+
+export interface AuditLogTenant {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface AuditLogItem {
+  id: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  actorId: string | null;
+  tenantId: string | null;
+  metadata?: Record<string, unknown> | null;
+  createdAt: string;
+  actor?: AuditLogActor | null;
+  tenant?: AuditLogTenant | null;
+}
+
+export interface OverviewMetricsResponse {
+  metrics: OverviewMetrics;
+  systemHealth: SystemHealth;
+  recentActivity: AuditLogItem[];
+}
+
+export interface AuditLogsQuery {
+  page?: number;
+  limit?: number;
+  action?: string;
+  entityType?: string;
+  search?: string;
+  tenantId?: string;
+}
+
+export interface AuditLogsResponse {
+  items: AuditLogItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 

@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ListTenantsDto } from './dto/list-tenants.dto';
 import { UpdateTenantStatusDto } from './dto/update-tenant-status.dto';
 import { UpdateTenantCapabilitiesDto } from './dto/update-tenant-capabilities.dto';
+import { ListAuditLogsDto } from './dto/list-audit-logs.dto';
 import { TenantStatus, Prisma } from '@whitraworks/database';
 import { CAPABILITY_REGISTRY } from '@whitraworks/types';
 
@@ -273,6 +274,121 @@ export class OpsTenantsService {
       success: true,
       message: 'Tenant capabilities updated successfully.',
       data: await this.getTenantCapabilities(tenantId),
+    };
+  }
+
+  async getOverviewMetrics() {
+    const [
+      totalTenants,
+      activeTenants,
+      suspendedTenants,
+      provisioningTenants,
+      totalUsers,
+      totalMembers,
+      recentAudits,
+    ] = await Promise.all([
+      this.prisma.base.tenant.count(),
+      this.prisma.base.tenant.count({ where: { status: 'ACTIVE' } }),
+      this.prisma.base.tenant.count({ where: { status: 'SUSPENDED' } }),
+      this.prisma.base.tenant.count({ where: { status: 'PROVISIONING' } }),
+      this.prisma.base.user.count(),
+      this.prisma.base.workspaceMember.count({ where: { status: 'ACTIVE' } }),
+      this.prisma.base.auditLog.findMany({
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          actor: {
+            select: { id: true, email: true, firstName: true, lastName: true },
+          },
+          tenant: {
+            select: { id: true, name: true, slug: true },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      metrics: {
+        totalTenants,
+        activeTenants,
+        suspendedTenants,
+        provisioningTenants,
+        totalUsers,
+        totalMembers,
+      },
+      systemHealth: {
+        database: 'HEALTHY',
+        redis: 'HEALTHY',
+        controlPlane: 'HEALTHY',
+      },
+      recentActivity: recentAudits,
+    };
+  }
+
+  async listAuditLogs(dto: ListAuditLogsDto) {
+    const page = dto.page && dto.page > 0 ? dto.page : 1;
+    const limit = dto.limit && dto.limit > 0 ? dto.limit : 15;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.AuditLogWhereInput = {};
+
+    if (dto.action && dto.action.trim()) {
+      where.action = dto.action.trim();
+    }
+
+    if (dto.entityType && dto.entityType.trim()) {
+      where.entityType = dto.entityType.trim();
+    }
+
+    if (dto.tenantId && dto.tenantId.trim()) {
+      where.tenantId = dto.tenantId.trim();
+    }
+
+    if (dto.search && dto.search.trim()) {
+      const search = dto.search.trim();
+      where.OR = [
+        { action: { contains: search, mode: 'insensitive' } },
+        { entityType: { contains: search, mode: 'insensitive' } },
+        { actor: { email: { contains: search, mode: 'insensitive' } } },
+        { tenant: { slug: { contains: search, mode: 'insensitive' } } },
+        { tenant: { name: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.base.auditLog.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          actor: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+              isPlatformSuperadmin: true,
+            },
+          },
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+        },
+      }),
+      this.prisma.base.auditLog.count({ where }),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
     };
   }
 }

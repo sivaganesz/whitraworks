@@ -338,4 +338,68 @@ describe('Ops Tenants Directory & Status Lifecycle (e2e)', () => {
       expect(auditLog?.actorId).toBe(superadminId);
     });
   });
+
+  describe('4. Platform Overview Metrics & Searchable Audit Logs (GET /ops/overview & /ops/audit-logs)', () => {
+    it('rejects unauthenticated requests to /ops/overview with 401', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/ops/overview')
+        .set('Host', 'ops.localhost:4000');
+
+      expect(res.status).toBe(401);
+    });
+
+    it('rejects regular tenant users from /ops/overview with 403 (Golden Rule 6)', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/ops/overview')
+        .set('Host', 'ops.localhost:4000')
+        .set('Cookie', regularUserCookie);
+
+      expect(res.status).toBe(403);
+    });
+
+    it('returns platform overview metrics for platform superadmins', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/ops/overview')
+        .set('Host', 'ops.localhost:4000')
+        .set('Cookie', superadminCookie);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.metrics).toBeDefined();
+      expect(res.body.data.metrics.totalTenants).toBeGreaterThanOrEqual(1);
+      expect(res.body.data.metrics.totalUsers).toBeGreaterThanOrEqual(2);
+      expect(res.body.data.systemHealth).toBeDefined();
+      expect(res.body.data.systemHealth.database).toBe('HEALTHY');
+      expect(Array.isArray(res.body.data.recentActivity)).toBe(true);
+    });
+
+    it('returns searchable paginated audit logs for platform superadmins', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/ops/audit-logs')
+        .set('Host', 'ops.localhost:4000')
+        .set('Cookie', superadminCookie);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items).toBeDefined();
+      expect(Array.isArray(res.body.data.items)).toBe(true);
+      expect(res.body.data.total).toBeGreaterThanOrEqual(1);
+
+      // Verify that audit log has actor details
+      const logWithActor = res.body.data.items.find((item: any) => item.actorId === superadminId);
+      expect(logWithActor).toBeDefined();
+      expect(logWithActor.actor.email).toContain('superadmin');
+    });
+
+    it('filters audit logs by action', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/ops/audit-logs?action=tenant.capabilities.update')
+        .set('Host', 'ops.localhost:4000')
+        .set('Cookie', superadminCookie);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items.length).toBeGreaterThanOrEqual(1);
+      for (const item of res.body.data.items) {
+        expect(item.action).toBe('tenant.capabilities.update');
+      }
+    });
+  });
 });

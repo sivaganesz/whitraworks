@@ -136,8 +136,8 @@
   * **Description**: Slide-out drawer with toggles for each capability in the registry, enforcing dependency validation.
   * **Acceptance**: Toggling capability writes to backend and live updates tenant configuration.
 
-- [ ] **Task 4.5: Platform Audit Logs & Health Dashboard**
-  * **Files**: `apps/ops-admin/src/pages/AuditLogs.tsx`, `apps/ops-admin/src/pages/Overview.tsx`
+- [x] **Task 4.5: Platform Audit Logs & Health Dashboard**
+  * **Files**: `apps/ops-admin/src/pages/AuditLogs.tsx`, `apps/ops-admin/src/pages/Overview.tsx`, `apps/api/src/modules/ops/ops-platform.controller.ts`, `apps/api/src/modules/ops/dto/list-audit-logs.dto.ts`
   * **Description**: Display platform metrics (total tenants, active, suspended) and searchable audit logs.
   * **Acceptance**: Audit events render accurately with actor and timestamp details.
 
