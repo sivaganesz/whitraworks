@@ -165,7 +165,7 @@
   * **Description**: Table of members with roles and statuses. Modal to send email invitations with role selection.
   * **Acceptance**: Inviting a member sends API request, renders in pending list, and displays shareable link.
 
-- [ ] **Task 5.5: Dynamic Capability-Based Navigation**
+- [x] **Task 5.5: Dynamic Capability-Based Navigation**
   * **Files**: `apps/tenant-admin/src/components/Sidebar.tsx`
   * **Description**: Sidebar that fetches enabled capabilities for the active workspace and conditionally renders module tabs.
   * **Acceptance**: Modules disabled in Ops Admin disappear from the Tenant Admin navigation menu.

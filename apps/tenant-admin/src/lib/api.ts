@@ -289,5 +289,15 @@ export const workspaceApi = {
       tenantSlug
     );
   },
+
+  getCapabilities: async (tenantSlug?: string | null): Promise<TenantCapability[]> => {
+    return fetchApi<TenantCapability[]>('/workspace/capabilities', { method: 'GET' }, tenantSlug);
+  },
 };
+
+export interface TenantCapability {
+  code: string;
+  enabled: boolean;
+  config: Record<string, unknown>;
+}
 

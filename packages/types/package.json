@@ -4,6 +4,7 @@
   "private": true,
   "description": "Shared TypeScript types, DTOs, and contracts for WhitraWorks",
   "main": "./dist/index.js",
+  "module": "./src/index.ts",
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
