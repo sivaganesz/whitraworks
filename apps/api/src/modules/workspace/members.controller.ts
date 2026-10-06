@@ -41,7 +41,8 @@ export class MembersController {
   ) {}
 
   @Get('profile')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, TenantRbacGuard)
+  @RequirePermissions('workspace:read')
   @ApiOperation({ summary: 'Get current workspace profile (Tenant scoped)' })
   @SwaggerResponse({ status: 200, description: 'Workspace profile retrieved successfully' })
   async getProfile(@Req() req: RequestWithTenant) {
@@ -142,7 +143,7 @@ export class MembersController {
   }
 
   @Get('test-kitchen')
-  @UseGuards(AuthGuard, CapabilityGuard)
+  @UseGuards(AuthGuard, TenantRbacGuard, CapabilityGuard)
   @RequireCapability('kitchen')
   @ApiOperation({ summary: 'Capability gated endpoint (requires kitchen)' })
   @SwaggerResponse({ status: 200, description: 'Kitchen capability authorized' })

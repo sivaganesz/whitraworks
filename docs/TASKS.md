@@ -182,7 +182,8 @@
     4. Reactivate `abchotel` and toggle `kitchen` capability $\rightarrow$ Verify `kitchen` tab appears in `abchotel`.
   * **Acceptance**: All steps pass without manual database intervention.
 
-- [ ] **Task 6.2: Multi-Tenant Negative Security Tests**
+- [x] **Task 6.2: Multi-Tenant Negative Security Tests**
+  * **Files**: `apps/api/test/negative-security.spec.ts`
   * **Description**: Automated tests attempting cross-tenant data access:
     * Tenant A user sending request to Tenant B endpoint.
     * Tenant Owner attempting to access `/ops/*` routes.

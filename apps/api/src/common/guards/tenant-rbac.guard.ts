@@ -22,15 +22,6 @@ export class TenantRbacGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
-      PERMISSIONS_KEY,
-      [context.getHandler(), context.getClass()]
-    );
-
-    if (!requiredPermissions || requiredPermissions.length === 0) {
-      return true;
-    }
-
     const req = context.switchToHttp().getRequest<RequestWithTenant & AuthenticatedRequest>();
 
     if (!req.user) {
@@ -73,6 +64,15 @@ export class TenantRbacGuard implements CanActivate {
       });
     }
 
+    const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
+      PERMISSIONS_KEY,
+      [context.getHandler(), context.getClass()]
+    );
+
+    if (!requiredPermissions || requiredPermissions.length === 0) {
+      return true;
+    }
+
     // OWNER has unrestricted access
     if (member.role.code === 'OWNER') {
       return true;
@@ -99,4 +99,3 @@ export class TenantRbacGuard implements CanActivate {
     return true;
   }
 }
-
