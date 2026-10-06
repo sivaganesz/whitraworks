@@ -248,3 +248,4 @@ export function Sidebar({ onNavigate, className = '' }: SidebarProps) {
     </aside>
   );
 }
+
