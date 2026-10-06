@@ -146,6 +146,70 @@ export interface UpdateWorkspaceProfilePayload {
   metadata?: Record<string, unknown>;
 }
 
+export interface WorkspaceMember {
+  id: string;
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  status: 'ACTIVE' | 'INVITED' | 'SUSPENDED';
+  role: {
+    id: string;
+    code: string;
+    name: string;
+  };
+  createdAt: string;
+}
+
+export interface ListMembersResponse {
+  items: WorkspaceMember[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export interface WorkspaceInvitation {
+  id: string;
+  email: string;
+  token: string;
+  expiresAt: string;
+  createdAt: string;
+  isExpired: boolean;
+  role: {
+    id: string;
+    code: string;
+    name: string;
+  };
+  invitedBy?: {
+    id: string;
+    email: string;
+    name: string;
+  } | null;
+  inviteUrl: string;
+}
+
+export interface InviteMemberPayload {
+  email: string;
+  roleCode?: string;
+  roleId?: string;
+}
+
+export interface InviteMemberResponse {
+  id: string;
+  email: string;
+  token: string;
+  expiresAt: string;
+  role: {
+    id: string;
+    code: string;
+    name: string;
+  };
+  inviteUrl: string;
+}
+
 export const workspaceApi = {
   getProfile: async (tenantSlug?: string | null): Promise<WorkspaceProfile> => {
     return fetchApi<WorkspaceProfile>('/workspace/profile', { method: 'GET' }, tenantSlug);
@@ -164,4 +228,66 @@ export const workspaceApi = {
       tenantSlug
     );
   },
+
+  listMembers: async (
+    params?: { page?: number; limit?: number; status?: string; search?: string },
+    tenantSlug?: string | null
+  ): Promise<ListMembersResponse> => {
+    const query = new URLSearchParams();
+    if (params?.page) query.set('page', params.page.toString());
+    if (params?.limit) query.set('limit', params.limit.toString());
+    if (params?.status) query.set('status', params.status);
+    if (params?.search) query.set('search', params.search);
+    const queryString = query.toString();
+    return fetchApi<ListMembersResponse>(
+      `/workspace/members${queryString ? `?${queryString}` : ''}`,
+      { method: 'GET' },
+      tenantSlug
+    );
+  },
+
+  listInvitations: async (tenantSlug?: string | null): Promise<WorkspaceInvitation[]> => {
+    return fetchApi<WorkspaceInvitation[]>('/workspace/invitations', { method: 'GET' }, tenantSlug);
+  },
+
+  inviteMember: async (
+    payload: InviteMemberPayload,
+    tenantSlug?: string | null
+  ): Promise<InviteMemberResponse> => {
+    return fetchApi<InviteMemberResponse>(
+      '/workspace/members/invite',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      },
+      tenantSlug
+    );
+  },
+
+  removeMember: async (
+    memberId: string,
+    tenantSlug?: string | null
+  ): Promise<{ message: string }> => {
+    return fetchApi<{ message: string }>(
+      `/workspace/members/${memberId}`,
+      {
+        method: 'DELETE',
+      },
+      tenantSlug
+    );
+  },
+
+  revokeInvitation: async (
+    invitationId: string,
+    tenantSlug?: string | null
+  ): Promise<{ message: string }> => {
+    return fetchApi<{ message: string }>(
+      `/workspace/invitations/${invitationId}`,
+      {
+        method: 'DELETE',
+      },
+      tenantSlug
+    );
+  },
 };
+

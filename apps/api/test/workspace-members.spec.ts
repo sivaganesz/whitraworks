@@ -110,6 +110,24 @@ describe('Workspace Memberships, RBAC & Capabilities (e2e)', () => {
       expect(res.body.data.items[0].role.code).toBe('OWNER');
       ownerMemberId = res.body.data.items[0].id;
     });
+
+    it('filters member listing by search query matching email or name', async () => {
+      const matchRes = await request(app.getHttpServer())
+        .get(`/workspace/members?search=${encodeURIComponent('Tester')}`)
+        .set('Host', `${testTenantSlug}.localhost:4000`)
+        .set('Cookie', [ownerCookie]);
+
+      expect(matchRes.status).toBe(200);
+      expect(matchRes.body.data.items.length).toBeGreaterThanOrEqual(1);
+
+      const noMatchRes = await request(app.getHttpServer())
+        .get('/workspace/members?search=nonexistentuser99999')
+        .set('Host', `${testTenantSlug}.localhost:4000`)
+        .set('Cookie', [ownerCookie]);
+
+      expect(noMatchRes.status).toBe(200);
+      expect(noMatchRes.body.data.items).toHaveLength(0);
+    });
   });
 
   describe('2. Member Invitation Lifecycle', () => {
@@ -165,6 +183,53 @@ describe('Workspace Memberships, RBAC & Capabilities (e2e)', () => {
 
       expect(res.status).toBe(404);
       expect(res.body.error.code).toBe('INVALID_INVITATION_TOKEN');
+    });
+
+    it('allows workspace owner to list pending invitations', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/workspace/invitations')
+        .set('Host', `${testTenantSlug}.localhost:4000`)
+        .set('Cookie', [ownerCookie]);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
+      const found = res.body.data.find((inv: { email: string }) => inv.email === staffEmail);
+      expect(found).toBeDefined();
+      expect(found.role.code).toBe('STAFF');
+      expect(found.isExpired).toBe(false);
+    });
+
+    it('supports revoking an unaccepted invitation', async () => {
+      const tempEmail = `revoke-test-${Date.now()}@example.com`;
+      const inviteRes = await request(app.getHttpServer())
+        .post('/workspace/members/invite')
+        .set('Host', `${testTenantSlug}.localhost:4000`)
+        .set('Cookie', [ownerCookie])
+        .send({
+          email: tempEmail,
+          roleCode: 'STAFF',
+        });
+
+      expect(inviteRes.status).toBe(201);
+      const invitationId = inviteRes.body.data.id;
+
+      const deleteRes = await request(app.getHttpServer())
+        .delete(`/workspace/invitations/${invitationId}`)
+        .set('Host', `${testTenantSlug}.localhost:4000`)
+        .set('Cookie', [ownerCookie]);
+
+      expect(deleteRes.status).toBe(200);
+      expect(deleteRes.body.success).toBe(true);
+
+      // Verify no longer in pending list
+      const listRes = await request(app.getHttpServer())
+        .get('/workspace/invitations')
+        .set('Host', `${testTenantSlug}.localhost:4000`)
+        .set('Cookie', [ownerCookie]);
+
+      const stillExists = listRes.body.data.some((inv: { id: string }) => inv.id === invitationId);
+      expect(stillExists).toBe(false);
     });
   });
 

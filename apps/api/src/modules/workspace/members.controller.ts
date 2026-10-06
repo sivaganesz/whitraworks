@@ -150,6 +150,39 @@ export class MembersController {
     return { status: 'kitchen_active' };
   }
 
+  @Get('invitations')
+  @UseGuards(AuthGuard, TenantRbacGuard)
+  @RequirePermissions('members:read')
+  @ApiOperation({ summary: 'List pending invitations for this workspace (Tenant scoped)' })
+  @SwaggerResponse({ status: 200, description: 'List of pending invitations' })
+  async listInvitations(@Req() req: RequestWithTenant) {
+    if (!req.tenant?.tenantId) {
+      throw new BadRequestException('Operation requires active workspace domain context.');
+    }
+    return this.membersService.listInvitations(req.tenant.tenantId);
+  }
+
+  @Delete('invitations/:invitationId')
+  @UseGuards(AuthGuard, TenantRbacGuard)
+  @RequirePermissions('members:invite')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Revoke a pending workspace invitation' })
+  @SwaggerResponse({ status: 200, description: 'Invitation revoked' })
+  async revokeInvitation(
+    @Req() req: RequestWithTenant,
+    @CurrentUser() currentUser: SessionPayload,
+    @Param('invitationId') invitationId: string
+  ) {
+    if (!req.tenant?.tenantId) {
+      throw new BadRequestException('Operation requires active workspace domain context.');
+    }
+    return this.membersService.revokeInvitation(
+      req.tenant.tenantId,
+      invitationId,
+      currentUser.userId
+    );
+  }
+
   @Get('invitations/:token')
   @ApiOperation({ summary: 'Inspect public invitation details by token' })
   @SwaggerResponse({ status: 200, description: 'Invitation details retrieved' })

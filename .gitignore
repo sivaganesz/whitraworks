@@ -5,6 +5,7 @@ dist/
 build/
 .turbo/
 .npm/
+*.tsbuildinfo
 
 # Logs
 logs/

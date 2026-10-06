@@ -22,5 +22,9 @@ export class ListMembersDto {
   @IsOptional()
   @IsEnum(['ACTIVE', 'INVITED', 'SUSPENDED'])
   status?: 'ACTIVE' | 'INVITED' | 'SUSPENDED';
+
+  @ApiPropertyOptional({ description: 'Search members by name or email' })
+  @IsOptional()
+  search?: string;
 }
 

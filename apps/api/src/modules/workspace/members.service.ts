@@ -70,6 +70,26 @@ export interface InvitationDetails {
   expiresAt: string;
 }
 
+export interface WorkspaceInvitationItem {
+  id: string;
+  email: string;
+  token: string;
+  expiresAt: string;
+  createdAt: string;
+  isExpired: boolean;
+  role: {
+    id: string;
+    code: string;
+    name: string;
+  };
+  invitedBy?: {
+    id: string;
+    email: string;
+    name: string;
+  } | null;
+  inviteUrl: string;
+}
+
 export interface AcceptInvitationResult {
   user: {
     id: string;
@@ -100,9 +120,22 @@ export class MembersService {
     const limit = query.limit || 20;
     const skip = (page - 1) * limit;
 
-    const where = {
+    const searchFilter = query.search?.trim();
+
+    const where: Prisma.WorkspaceMemberWhereInput = {
       tenantId,
       ...(query.status ? { status: query.status as MembershipStatus } : {}),
+      ...(searchFilter
+        ? {
+            user: {
+              OR: [
+                { email: { contains: searchFilter, mode: 'insensitive' } },
+                { firstName: { contains: searchFilter, mode: 'insensitive' } },
+                { lastName: { contains: searchFilter, mode: 'insensitive' } },
+              ],
+            },
+          }
+        : {}),
     };
 
     const [total, members] = await Promise.all([
@@ -298,6 +331,89 @@ export class MembersService {
       },
       inviteUrl,
     };
+  }
+
+  async listInvitations(tenantId: string): Promise<WorkspaceInvitationItem[]> {
+    const tenant = await this.prisma.base.tenant.findUnique({
+      where: { id: tenantId },
+      select: { slug: true },
+    });
+
+    const slug = tenant?.slug || '';
+
+    const invitations = await this.prisma.base.invitation.findMany({
+      where: {
+        tenantId,
+        acceptedAt: null,
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        role: {
+          select: { id: true, code: true, name: true },
+        },
+        invitedBy: {
+          select: { id: true, email: true, firstName: true, lastName: true },
+        },
+      },
+    });
+
+    const now = new Date();
+
+    return invitations.map((inv) => ({
+      id: inv.id,
+      email: inv.email,
+      token: inv.token,
+      expiresAt: inv.expiresAt.toISOString(),
+      createdAt: inv.createdAt.toISOString(),
+      isExpired: inv.expiresAt < now,
+      role: {
+        id: inv.role.id,
+        code: inv.role.code,
+        name: inv.role.name,
+      },
+      invitedBy: inv.invitedBy
+        ? {
+            id: inv.invitedBy.id,
+            email: inv.invitedBy.email,
+            name: `${inv.invitedBy.firstName} ${inv.invitedBy.lastName}`.trim(),
+          }
+        : null,
+      inviteUrl: `https://${slug}.whitraworks.com/invite/accept?token=${inv.token}`,
+    }));
+  }
+
+  async revokeInvitation(
+    tenantId: string,
+    invitationId: string,
+    actorId: string
+  ): Promise<{ message: string }> {
+    const invitation = await this.prisma.base.invitation.findFirst({
+      where: { id: invitationId, tenantId },
+    });
+
+    if (!invitation) {
+      throw new NotFoundException({
+        code: API_ERROR_CODES.RESOURCE_NOT_FOUND,
+        message: 'Invitation not found.',
+      });
+    }
+
+    await this.prisma.base.invitation.delete({
+      where: { id: invitationId },
+    });
+
+    await this.prisma.base.auditLog.create({
+      data: {
+        tenantId,
+        actorId,
+        action: 'member.invitation.revoke',
+        entityType: 'Invitation',
+        entityId: invitationId,
+        diffJson: { email: invitation.email },
+      },
+    });
+
+    return { message: 'Invitation revoked successfully.' };
   }
 
   async getInvitationDetails(token: string): Promise<InvitationDetails> {

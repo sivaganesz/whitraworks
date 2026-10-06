@@ -160,7 +160,7 @@
   * **Description**: Forms to view and edit business name, currency, timezone, and operational addresses.
   * **Acceptance**: Saves settings successfully; updates workspace header.
 
-- [ ] **Task 5.4: Staff Members & Invitations Management**
+- [x] **Task 5.4: Staff Members & Invitations Management**
   * **Files**: `apps/tenant-admin/src/pages/Members.tsx`, `apps/tenant-admin/src/components/InviteMemberModal.tsx`
   * **Description**: Table of members with roles and statuses. Modal to send email invitations with role selection.
   * **Acceptance**: Inviting a member sends API request, renders in pending list, and displays shareable link.
