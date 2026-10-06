@@ -174,7 +174,7 @@
 
 ## Module 6: End-to-End Verification & Integration Testing
 
-- [ ] **Task 6.1: Local Subdomain End-to-End Verification**
+- [x] **Task 6.1: Local Subdomain End-to-End Verification**
   * **Description**: Verify complete flow in local browser using `*.localhost`:
     1. Register `abchotel` via public signup $\rightarrow$ Owner lands in `abchotel.localhost:3000`.
     2. Try registering again with same email $\rightarrow$ Collision error directing to `abchotel`.
