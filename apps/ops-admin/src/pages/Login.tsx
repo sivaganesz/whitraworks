@@ -1,17 +1,44 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Button, Input, ThemeToggle } from '@whitraworks/ui';
-import { Shield } from 'lucide-react';
+import { Shield, AlertCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export function LoginPage() {
+  const { login, isAuthenticated, error: authError, clearError } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
-  const handleSubmit = (e: FormEvent) => {
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/';
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, from]);
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setLocalError(null);
+    clearError();
     setIsLoading(true);
-    // Full superadmin authentication flow wired in Task 4.2
+
+    try {
+      await login(email.trim(), password);
+      navigate(from, { replace: true });
+    } catch (err) {
+      setLocalError(err instanceof Error ? err.message : 'Sign in failed.');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const displayError = localError || authError;
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col items-center justify-center p-4 selection:bg-zinc-900 selection:text-zinc-50">
@@ -44,6 +71,13 @@ export function LoginPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {displayError && (
+                <div className="rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20 p-3 text-xs text-red-600 dark:text-red-400 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                  <span>{displayError}</span>
+                </div>
+              )}
+
               <Input
                 label="Superadmin Email"
                 type="email"

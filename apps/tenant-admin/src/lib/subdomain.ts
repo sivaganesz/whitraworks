@@ -24,7 +24,7 @@ export interface SubdomainResolution {
 }
 
 const DEV_WORKSPACE_STORAGE_KEY = 'whitraworks_dev_workspace_slug';
-export const DEFAULT_DEV_SLUG = 'acme-corp';
+export const DEFAULT_DEV_SLUG = 'abchotel';
 
 export function getDevWorkspaceSlug(): string {
   if (typeof window === 'undefined') return DEFAULT_DEV_SLUG;

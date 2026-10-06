@@ -17,7 +17,7 @@ import { ApiError } from '../lib/api';
 
 export function LoginPage() {
   const { login, isAuthenticated } = useAuth();
-  const { slug } = useTenant();
+  const { slug, resolution, setDevSlug } = useTenant();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -101,6 +101,24 @@ export function LoginPage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {resolution.isDevFallback && (
+                <div>
+                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5 flex justify-between items-center">
+                    <span>Target Workspace</span>
+                    <span className="text-[10px] text-zinc-400 font-mono">Dev Mode</span>
+                  </label>
+                  <select
+                    value={slug || 'abchotel'}
+                    onChange={(e) => setDevSlug(e.target.value)}
+                    className="w-full text-xs rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-zinc-50"
+                  >
+                    <option value="abchotel">abchotel — ABC Hotel & Dining</option>
+                    <option value="metrocafe">metrocafe — Metro Café & Bakery</option>
+                    <option value="zenithretail">zenithretail — Zenith Retail Stores</option>
+                  </select>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
                   Email Address
