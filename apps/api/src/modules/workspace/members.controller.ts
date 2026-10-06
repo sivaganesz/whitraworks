@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Body,
   Param,
@@ -27,6 +28,7 @@ import { RequireCapability } from '../../common/decorators/require-capability.de
 import { ListMembersDto } from './dto/list-members.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
 import { AcceptInvitationDto } from './dto/accept-invitation.dto';
+import { UpdateWorkspaceProfileDto } from './dto/update-workspace-profile.dto';
 import { RequestWithTenant } from '../../common/middleware/tenant-resolution.middleware';
 import { SessionPayload } from '../auth/session.service';
 
@@ -37,6 +39,38 @@ export class MembersController {
     @Inject(MembersService) private readonly membersService: MembersService,
     @Inject(SessionService) private readonly sessionService: SessionService
   ) {}
+
+  @Get('profile')
+  @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Get current workspace profile (Tenant scoped)' })
+  @SwaggerResponse({ status: 200, description: 'Workspace profile retrieved successfully' })
+  async getProfile(@Req() req: RequestWithTenant) {
+    if (!req.tenant?.tenantId) {
+      throw new BadRequestException('Operation requires an active workspace domain context.');
+    }
+    return this.membersService.getWorkspaceProfile(req.tenant.tenantId);
+  }
+
+  @Patch('profile')
+  @UseGuards(AuthGuard, TenantRbacGuard)
+  @RequirePermissions('workspace:update')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update workspace profile (Business name, currency, timezone, metadata)' })
+  @SwaggerResponse({ status: 200, description: 'Workspace profile updated successfully' })
+  async updateProfile(
+    @Req() req: RequestWithTenant & AuthenticatedRequest,
+    @CurrentUser() currentUser: SessionPayload,
+    @Body() dto: UpdateWorkspaceProfileDto
+  ) {
+    if (!req.tenant?.tenantId) {
+      throw new BadRequestException('Operation requires an active workspace domain context.');
+    }
+    return this.membersService.updateWorkspaceProfile(
+      req.tenant.tenantId,
+      currentUser.userId,
+      dto
+    );
+  }
 
   @Get('members')
   @UseGuards(AuthGuard, TenantRbacGuard)

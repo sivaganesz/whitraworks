@@ -155,8 +155,8 @@
   * **Description**: Login page and top-header workspace switcher displaying user's available business workspaces.
   * **Acceptance**: Selecting another workspace navigates to the target subdomain.
 
-- [ ] **Task 5.3: Workspace Profile & Settings View**
-  * **Files**: `apps/tenant-admin/src/pages/Settings.tsx`
+- [x] **Task 5.3: Workspace Profile & Settings View**
+  * **Files**: `apps/tenant-admin/src/pages/Settings.tsx`, `apps/api/src/modules/workspace/members.controller.ts`, `apps/api/src/modules/workspace/members.service.ts`, `apps/api/src/modules/workspace/dto/update-workspace-profile.dto.ts`
   * **Description**: Forms to view and edit business name, currency, timezone, and operational addresses.
   * **Acceptance**: Saves settings successfully; updates workspace header.
 

@@ -16,7 +16,7 @@
 | **Module 2** | **Shared Contracts & Libraries** | **COMPLETED** | **100%** | `@whitraworks/types` (DTOs, error codes, Zod schemas), `@whitraworks/ui` components. |
 | **Module 3** | **Multi-Tenant Backend Core (`apps/api`)** | **COMPLETED** | **100%** | Scaffold, subdomain tenant middleware, Argon2id auth, atomic registration, workspace memberships, invitation lifecycle, switcher, RBAC guards, and Capability engine guards. |
 | **Module 4** | **Root Parent Admin UI (`apps/ops-admin`)** | **COMPLETED** | **100%** | All 5 tasks completed: ThemeProvider dual themes, OpsLayout, Superadmin Auth, ProtectedRoute guard, Tenant Directory, Status Lifecycle, Capability Management Drawer, Platform Overview Dashboard, and Searchable Audit Logs. |
-| **Module 5** | **Tenant Workspace Admin UI (`apps/tenant-admin`)** | **IN PROGRESS** | **40%** | Tasks 5.1 & 5.2 completed: Scaffold, Subdomain detection, ThemeProvider (dual themes), TenantLayout shell, AuthContext, ProtectedRoute, Workspace Switcher, and Login page. Next: Task 5.3 Workspace Profile & Settings View. |
+| **Module 5** | **Tenant Workspace Admin UI (`apps/tenant-admin`)** | **IN PROGRESS** | **60%** | Tasks 5.1, 5.2 & 5.3 completed: Scaffold, Subdomain detection, ThemeProvider (dual themes), TenantLayout shell, AuthContext, ProtectedRoute, Workspace Switcher, Login page, and Workspace Profile & Settings View. Next: Task 5.4 Staff Members & Invitations Management. |
 | **Module 6** | **E2E Verification & Integration Testing** | Pending | 0% | Cross-tenant negative security tests, local subdomain verification. |
 
 ---

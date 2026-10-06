@@ -358,5 +358,69 @@ describe('Workspace Memberships, RBAC & Capabilities (e2e)', () => {
       expect(updatedStaff.status).toBe('SUSPENDED');
     });
   });
+
+  describe('8. Workspace Profile Retrieval & Update (GET & PATCH /workspace/profile)', () => {
+    it('retrieves current workspace profile for authenticated member', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/workspace/profile')
+        .set('Host', `${testTenantSlug}.localhost:4000`)
+        .set('Cookie', [ownerCookie]);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.slug).toBe(testTenantSlug);
+      expect(res.body.data.name).toBe('Member Testing Co');
+      expect(res.body.data.currency).toBeDefined();
+      expect(res.body.data.timezone).toBeDefined();
+    });
+
+    it('rejects profile update from user without workspace:update permission (403)', async () => {
+      // Login with staff user
+      const loginStaffRes = await request(app.getHttpServer())
+        .post('/auth/login')
+        .set('Host', `${testTenantSlug}.localhost:4000`)
+        .send({ email: staffEmail, password: staffPassword });
+
+      // If staff is suspended from previous test, staff gets rejected
+      // Regardless, unpermitted or suspended user is rejected
+      const staffActiveCookie = loginStaffRes.headers['set-cookie']?.[0] || staffCookie;
+
+      const res = await request(app.getHttpServer())
+        .patch('/workspace/profile')
+        .set('Host', `${testTenantSlug}.localhost:4000`)
+        .set('Cookie', [staffActiveCookie])
+        .send({ name: 'Hacked Name' });
+
+      expect([403, 401]).toContain(res.status);
+    });
+
+    it('updates workspace profile successfully when requested by OWNER', async () => {
+      const res = await request(app.getHttpServer())
+        .patch('/workspace/profile')
+        .set('Host', `${testTenantSlug}.localhost:4000`)
+        .set('Cookie', [ownerCookie])
+        .send({
+          name: 'Updated Member Testing Corp',
+          currency: 'EUR',
+          timezone: 'Europe/Paris',
+          metadata: { phone: '+1-555-0100', address: '456 Avenue des Champs' },
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.name).toBe('Updated Member Testing Corp');
+      expect(res.body.data.currency).toBe('EUR');
+      expect(res.body.data.timezone).toBe('Europe/Paris');
+      expect(res.body.data.metadata.phone).toBe('+1-555-0100');
+
+      // Verify that GET /workspace/profile reflects the updated values
+      const getRes = await request(app.getHttpServer())
+        .get('/workspace/profile')
+        .set('Host', `${testTenantSlug}.localhost:4000`)
+        .set('Cookie', [ownerCookie]);
+
+      expect(getRes.status).toBe(200);
+      expect(getRes.body.data.name).toBe('Updated Member Testing Corp');
+      expect(getRes.body.data.currency).toBe('EUR');
+    });
+  });
 });
 

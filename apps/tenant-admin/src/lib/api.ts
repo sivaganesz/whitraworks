@@ -124,3 +124,44 @@ export const authApi = {
     });
   },
 };
+
+export interface WorkspaceProfile {
+  id: string;
+  slug: string;
+  name: string;
+  status: 'PROVISIONING' | 'ACTIVE' | 'SUSPENDED' | 'TERMINATED';
+  currency: string;
+  timezone: string;
+  logoUrl?: string | null;
+  metadata?: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateWorkspaceProfilePayload {
+  name?: string;
+  currency?: string;
+  timezone?: string;
+  logoUrl?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export const workspaceApi = {
+  getProfile: async (tenantSlug?: string | null): Promise<WorkspaceProfile> => {
+    return fetchApi<WorkspaceProfile>('/workspace/profile', { method: 'GET' }, tenantSlug);
+  },
+
+  updateProfile: async (
+    payload: UpdateWorkspaceProfilePayload,
+    tenantSlug?: string | null
+  ): Promise<WorkspaceProfile> => {
+    return fetchApi<WorkspaceProfile>(
+      '/workspace/profile',
+      {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      },
+      tenantSlug
+    );
+  },
+};

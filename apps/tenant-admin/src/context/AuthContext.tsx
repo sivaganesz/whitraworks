@@ -20,6 +20,7 @@ interface AuthContextValue {
   logout: () => Promise<void>;
   switchWorkspace: (targetSlug: string) => Promise<void>;
   refreshSession: () => Promise<void>;
+  updateActiveWorkspaceName: (newName: string) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -99,6 +100,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateActiveWorkspaceName = (newName: string) => {
+    if (activeWorkspace) {
+      setActiveWorkspace({ ...activeWorkspace, name: newName });
+    }
+    setAvailableWorkspaces((prev) =>
+      prev.map((ws) => (ws.slug === slug ? { ...ws, name: newName } : ws))
+    );
+  };
+
   const isAuthenticated = !!user;
   const hasWorkspaceAccess =
     isAuthenticated &&
@@ -118,6 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         switchWorkspace,
         refreshSession,
+        updateActiveWorkspaceName,
       }}
     >
       {children}

@@ -14,7 +14,9 @@ import { SessionService, SessionPayload } from '../auth/session.service';
 import { ListMembersDto } from './dto/list-members.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
 import { AcceptInvitationDto } from './dto/accept-invitation.dto';
+import { UpdateWorkspaceProfileDto } from './dto/update-workspace-profile.dto';
 import { API_ERROR_CODES, MembershipStatus } from '@whitraworks/types';
+import { Prisma } from '@whitraworks/database';
 
 
 export interface MemberListItem {
@@ -610,6 +612,94 @@ export class MembersService {
       enabled: c.isEnabled,
       config: c.configJson,
     }));
+  }
+
+  async getWorkspaceProfile(tenantId: string) {
+    const tenant = await this.prisma.base.tenant.findUnique({
+      where: { id: tenantId },
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        status: true,
+        currency: true,
+        timezone: true,
+        logoUrl: true,
+        metadata: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!tenant) {
+      throw new NotFoundException({
+        code: API_ERROR_CODES.TENANT_NOT_FOUND,
+        message: 'Workspace not found.',
+      });
+    }
+
+    return tenant;
+  }
+
+  async updateWorkspaceProfile(
+    tenantId: string,
+    actorId: string,
+    dto: UpdateWorkspaceProfileDto
+  ) {
+    const existingTenant = await this.prisma.base.tenant.findUnique({
+      where: { id: tenantId },
+    });
+
+    if (!existingTenant) {
+      throw new NotFoundException({
+        code: API_ERROR_CODES.TENANT_NOT_FOUND,
+        message: 'Workspace not found.',
+      });
+    }
+
+    const data: Prisma.TenantUpdateInput = {};
+    if (dto.name !== undefined) data.name = dto.name.trim();
+    if (dto.currency !== undefined) data.currency = dto.currency.toUpperCase();
+    if (dto.timezone !== undefined) data.timezone = dto.timezone.trim();
+    if (dto.logoUrl !== undefined) data.logoUrl = dto.logoUrl.trim() || null;
+    if (dto.metadata !== undefined) {
+      const currentMeta = (existingTenant.metadata as Record<string, unknown>) || {};
+      data.metadata = { ...currentMeta, ...dto.metadata } as Prisma.InputJsonValue;
+    }
+
+    const updated = await this.prisma.base.tenant.update({
+      where: { id: tenantId },
+      data,
+    });
+
+    // Immutable audit trail logging (Golden Rule 2)
+    await this.prisma.base.auditLog.create({
+      data: {
+        tenantId,
+        actorId,
+        action: 'workspace.profile.update',
+        entityType: 'Tenant',
+        entityId: tenantId,
+        diffJson: {
+          before: {
+            name: existingTenant.name,
+            currency: existingTenant.currency,
+            timezone: existingTenant.timezone,
+            logoUrl: existingTenant.logoUrl,
+            metadata: existingTenant.metadata,
+          },
+          after: {
+            name: updated.name,
+            currency: updated.currency,
+            timezone: updated.timezone,
+            logoUrl: updated.logoUrl,
+            metadata: updated.metadata,
+          },
+        },
+      },
+    });
+
+    return updated;
   }
 }
 
