@@ -12,21 +12,24 @@ This permission protocol is strict, non-negotiable, and must always be followed 
 1. **Git Commit & Push (Explicit Permission Required)**:
    * **ONLY ask for user permission before running `git commit` and `git push`.**
    * Never execute `git commit` or `git push` autonomously. Always present the changes and ask for your approval first.
-   * For read-only and staging Git commands—such as `git show`, `git diff`, `git status`, `git log`, `git add`, and `git add .`—**do NOT ask for permission**; execute them autonomously as needed.
+   * For ALL other Git commands—such as `git grep`, `git show`, `git diff`, `git status`, `git log`, `git add`, and `git add .`—**NEVER ask for permission**; execute them autonomously.
 
 2. **Autonomous Project Operations (DO NOT Ask for Permission)**:
-   * For all internal development actions inside the project directory, **proceed autonomously without asking for permission**:
+   * For ALL internal development actions inside the project directory, **proceed autonomously without asking for permission**:
+     * Searching and inspecting code (`git grep`, ripgrep, find, dir).
      * Staging and inspecting git changes (`git show`, `git diff`, `git status`, `git log`, `git add`, `git add .`).
-     * Creating, editing, or deleting project files.
-     * Creating folders and directory structures.
+     * Running workspace and package commands (`pnpm --filter ...`, `pnpm run ...`, `npx ...`, `node ...`, `turbo ...`).
+     * Creating, editing, or deleting project files and directories.
      * Installing, updating, or removing dependencies (`pnpm add`, `pnpm install`).
-     * Running builds, linters, compilers, and test suites (`pnpm build`, `pnpm test`).
-     * Executing database schema generations, Prisma migrations, and seed scripts.
+     * Running builds, linters, compilers, and test suites (`pnpm build`, `pnpm test`, `vitest`).
+     * Executing database schema generations, Prisma migrations, and seed scripts (`pnpm db:seed`, `prisma ...`).
      * Launching or stopping local Docker services (`docker compose up -d`).
+     * Running local curls, HTTP checks, or test scripts inside the workspace.
+   * **Under no circumstance should the agent ask for user permission, prompt, or hesitate for any command within `e:\PROJECTS\whitraworks` other than `git commit` and `git push`.**
 
 3. **System-Level & External Operations (Explicit Permission Required)**:
    * **Always ask for user permission first** before:
-     * Any system-level update or global configuration change.
+     * Any system-level update or global OS/tooling configuration change.
      * Creating, modifying, or reading anything outside the project workspace directory (`e:\PROJECTS\whitraworks`).
 
 ---
