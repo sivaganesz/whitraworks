@@ -163,7 +163,7 @@ async function main() {
   // 3. Seed Initial Platform Superadmin
   console.log('  -> Seeding Root Platform Superadmin...');
   const superadminEmail = process.env.INITIAL_SUPERADMIN_EMAIL || 'superadmin@whitraworks.com';
-  const superadminPassword = process.env.INITIAL_SUPERADMIN_PASSWORD || ' ';
+  const superadminPassword = process.env.INITIAL_SUPERADMIN_PASSWORD || 'ChangeMeImmediately123!';
   const passwordHash = await argon2.hash(superadminPassword);
 
   const superadmin = await prisma.user.upsert({
