@@ -7,12 +7,14 @@ import { ListAuditLogsDto } from './dto/list-audit-logs.dto';
 import { TenantStatus, Prisma } from '@whitraworks/database';
 import { CAPABILITY_REGISTRY } from '@whitraworks/types';
 import { RedisService } from '../redis/redis.service';
+import { SessionService } from '../auth/session.service';
 
 @Injectable()
 export class OpsTenantsService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(RedisService) private readonly redis: RedisService
+    @Inject(RedisService) private readonly redis: RedisService,
+    @Inject(SessionService) private readonly sessionService: SessionService
   ) {}
 
   async listTenants(dto: ListTenantsDto) {
@@ -134,6 +136,13 @@ export class OpsTenantsService {
 
     // Invalidate distributed Redis cache immediately so changes take effect across all nodes
     await this.redis.invalidateTenant(tenant.slug);
+
+    // Invalidate all active sessions for this workspace if suspended, or clear if reactivated
+    if (dto.status === 'SUSPENDED') {
+      await this.sessionService.invalidateTenantSessions(tenantId);
+    } else if (dto.status === 'ACTIVE') {
+      await this.sessionService.clearTenantSessionInvalidation(tenantId);
+    }
 
     return {
       success: true,

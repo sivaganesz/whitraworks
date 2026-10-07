@@ -30,10 +30,13 @@
   - Wire Redis client into `apps/api` (`RedisModule` / `RedisService`).
   - Cache subdomain tenant resolution lookups (`slug -> tenantId, status`) with automatic cache invalidation on status/profile updates.
   - Implement distributed rate limiting using `@nestjs/throttler` with Redis store on sensitive public endpoints (`/auth/login`, `/public/register`).
-- [ ] **Task 5: Transactional Email Notification Service**
-  - Wire transactional email dispatch (SMTP / Resend / AWS SES interface) for member invitations, welcome emails, and password resets.
-- [ ] **Task 6: Distributed Session Invalidation & Token Blocklist**
-  - Redis token blocklist to invalidate active sessions instantaneously when a user is deactivated or a tenant is suspended.
+- [x] **Task 5: Transactional Email Notification Service (Resend)** *(COMPLETED)*
+  - Wire transactional email dispatch via Resend REST API for member invitations, welcome emails, and password resets.
+  - Implements responsive, branded HTML templates with fallback dry-run logging mode when unconfigured.
+- [x] **Task 6: Distributed Session Invalidation & Token Blocklist (Redis)** *(COMPLETED)*
+  - Redis token blocklist to invalidate active sessions instantaneously upon logout (`POST /auth/logout`).
+  - Real-time workspace member deactivation session revocation (`session:user_invalidated:<userId>`).
+  - Real-time workspace suspension session revocation (`session:tenant_invalidated:<tenantId>`).
 
 ---
 

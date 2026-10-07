@@ -18,6 +18,7 @@ import { UpdateWorkspaceProfileDto } from './dto/update-workspace-profile.dto';
 import { API_ERROR_CODES, MembershipStatus } from '@whitraworks/types';
 import { Prisma } from '@whitraworks/database';
 import { RedisService } from '../redis/redis.service';
+import { MailService } from '../mail/mail.service';
 
 
 export interface MemberListItem {
@@ -114,7 +115,8 @@ export class MembersService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(PasswordService) private readonly passwordService: PasswordService,
     @Inject(SessionService) private readonly sessionService: SessionService,
-    @Inject(RedisService) private readonly redis: RedisService
+    @Inject(RedisService) private readonly redis: RedisService,
+    @Inject(MailService) private readonly mailService: MailService
   ) {}
 
   async listMembers(tenantId: string, query: ListMembersDto): Promise<ListMembersResult> {
@@ -204,7 +206,7 @@ export class MembersService {
     // 1. Fetch Tenant
     const tenant = await this.prisma.base.tenant.findUnique({
       where: { id: tenantId },
-      select: { id: true, slug: true, status: true },
+      select: { id: true, slug: true, status: true, name: true },
     });
 
     if (!tenant) {
@@ -319,7 +321,20 @@ export class MembersService {
       },
     });
 
-    const inviteUrl = `https://${tenant.slug}.whitraworks.com/invite/accept?token=${token}`;
+    const isProd = process.env['NODE_ENV'] === 'production';
+    const inviteUrl = isProd
+      ? `https://${tenant.slug}.whitraworks.com/invite/accept?token=${token}`
+      : `http://${tenant.slug}.localhost:3000/invite/accept?token=${token}`;
+
+    // Dispatch transactional invitation email via Resend
+    await this.mailService.sendInvitationEmail({
+      to: invitation.email,
+      workspaceName: tenant.name,
+      workspaceSlug: tenant.slug,
+      roleName: invitation.role.name,
+      inviteUrl,
+      expiresAt: invitation.expiresAt,
+    }).catch(() => {});
 
     return {
       id: invitation.id,
@@ -709,6 +724,9 @@ export class MembersService {
       where: { id: member.id },
       data: { status: 'SUSPENDED' },
     });
+
+    // Invalidate active user sessions for deactivated member immediately
+    await this.sessionService.invalidateUserSessions(member.userId);
 
     return {
       message: 'Workspace member deactivated successfully.',

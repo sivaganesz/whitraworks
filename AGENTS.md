@@ -9,15 +9,14 @@
 
 This permission protocol is strict, non-negotiable, and must always be followed at all times:
 
-1. **Git Commit & Push (Explicit Permission Required)**:
-   * **ONLY ask for user permission before running `git commit` and `git push`.**
-   * Never execute `git commit` or `git push` autonomously. Always present the changes and ask for your approval first.
-   * For ALL other Git commands—such as `git grep`, `git show`, `git diff`, `git status`, `git log`, `git add`, and `git add .`—**NEVER ask for permission**; execute them autonomously.
+1. **Autonomous Git Operations (PERMITTED WITHOUT ASKING)**:
+   * The user has explicitly granted full permission to autonomously stage, commit, push, and merge branches (`git add`, `git commit`, `git push`, `git merge`, `git checkout`).
+   * Never prompt or ask the user for permission for Git operations inside this repository.
 
-2. **Autonomous Project Operations (DO NOT Ask for Permission)**:
+2. **Autonomous Project Operations (PERMITTED WITHOUT ASKING)**:
    * For ALL internal development actions inside the project directory, **proceed autonomously without asking for permission**:
      * Searching and inspecting code (`git grep`, ripgrep, find, dir).
-     * Staging and inspecting git changes (`git show`, `git diff`, `git status`, `git log`, `git add`, `git add .`).
+     * Staging, committing, and pushing git changes (`git show`, `git diff`, `git status`, `git log`, `git add`, `git commit`, `git push`).
      * Running workspace and package commands (`pnpm --filter ...`, `pnpm run ...`, `npx ...`, `node ...`, `turbo ...`).
      * Creating, editing, or deleting project files and directories.
      * Installing, updating, or removing dependencies (`pnpm add`, `pnpm install`).
@@ -25,7 +24,7 @@ This permission protocol is strict, non-negotiable, and must always be followed 
      * Executing database schema generations, Prisma migrations, and seed scripts (`pnpm db:seed`, `prisma ...`).
      * Launching or stopping local Docker services (`docker compose up -d`).
      * Running local curls, HTTP checks, or test scripts inside the workspace.
-   * **Under no circumstance should the agent ask for user permission, prompt, or hesitate for any command within `e:\PROJECTS\whitraworks` other than `git commit` and `git push`.**
+   * **Under no circumstance should the agent ask for user permission, prompt, or hesitate for any command within `e:\PROJECTS\whitraworks`.**
 
 3. **System-Level & External Operations (Explicit Permission Required)**:
    * **Always ask for user permission first** before:

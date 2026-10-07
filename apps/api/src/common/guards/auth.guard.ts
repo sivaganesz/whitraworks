@@ -19,7 +19,7 @@ export class AuthGuard implements CanActivate {
     @Inject(SessionService) private readonly sessionService: SessionService
   ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<AuthenticatedRequest>();
 
     const token =
@@ -34,7 +34,7 @@ export class AuthGuard implements CanActivate {
       });
     }
 
-    const session = this.sessionService.verifySessionToken(token);
+    const session = await this.sessionService.verifySessionToken(token);
     req.user = session;
     return true;
   }
