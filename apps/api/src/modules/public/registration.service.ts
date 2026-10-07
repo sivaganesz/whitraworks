@@ -9,13 +9,15 @@ import { PasswordService } from '../auth/password.service';
 import { SessionService } from '../auth/session.service';
 import { RegisterDto } from './dto/register.dto';
 import { API_ERROR_CODES, RESERVED_SLUGS, CAPABILITY_REGISTRY } from '@whitraworks/types';
+import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class RegistrationService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(PasswordService) private readonly passwordService: PasswordService,
-    @Inject(SessionService) private readonly sessionService: SessionService
+    @Inject(SessionService) private readonly sessionService: SessionService,
+    @Inject(RedisService) private readonly redis: RedisService
   ) {}
 
   async checkSlug(rawSlug: string) {
@@ -196,6 +198,14 @@ export class RegistrationService {
       email: result.user.email,
       isPlatformSuperadmin: false,
       tenantId: result.tenant.id,
+    });
+
+    // 3.7 Prime Redis cache with the newly registered tenant
+    await this.redis.setCachedTenant(result.tenant.slug, {
+      id: result.tenant.id,
+      slug: result.tenant.slug,
+      name: result.tenant.name,
+      status: 'ACTIVE',
     });
 
     return {

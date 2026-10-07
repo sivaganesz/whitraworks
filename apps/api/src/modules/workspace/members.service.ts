@@ -17,6 +17,7 @@ import { AcceptInvitationDto } from './dto/accept-invitation.dto';
 import { UpdateWorkspaceProfileDto } from './dto/update-workspace-profile.dto';
 import { API_ERROR_CODES, MembershipStatus } from '@whitraworks/types';
 import { Prisma } from '@whitraworks/database';
+import { RedisService } from '../redis/redis.service';
 
 
 export interface MemberListItem {
@@ -112,7 +113,8 @@ export class MembersService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(PasswordService) private readonly passwordService: PasswordService,
-    @Inject(SessionService) private readonly sessionService: SessionService
+    @Inject(SessionService) private readonly sessionService: SessionService,
+    @Inject(RedisService) private readonly redis: RedisService
   ) {}
 
   async listMembers(tenantId: string, query: ListMembersDto): Promise<ListMembersResult> {
@@ -814,6 +816,9 @@ export class MembersService {
         },
       },
     });
+
+    // Invalidate distributed Redis cache immediately
+    await this.redis.invalidateTenant(existingTenant.slug);
 
     return updated;
   }

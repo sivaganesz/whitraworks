@@ -81,6 +81,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
         return API_ERROR_CODES.AUTH_FORBIDDEN;
       case HttpStatus.NOT_FOUND:
         return API_ERROR_CODES.RESOURCE_NOT_FOUND;
+      case HttpStatus.TOO_MANY_REQUESTS:
+        return API_ERROR_CODES.RATE_LIMIT_EXCEEDED;
       default:
         return API_ERROR_CODES.INTERNAL_SERVER_ERROR;
     }

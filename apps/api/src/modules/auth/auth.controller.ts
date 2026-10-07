@@ -10,6 +10,7 @@ import {
   Inject,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse as SwaggerResponse } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { SessionService, SESSION_COOKIE_NAME, LEGACY_SESSION_COOKIE_NAME } from './session.service';
@@ -26,6 +27,7 @@ export class AuthController {
   ) {}
 
   @Post('login')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Log in to tenant workspace or ops control plane' })
   @SwaggerResponse({ status: 200, description: 'Authentication successful' })

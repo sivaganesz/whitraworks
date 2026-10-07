@@ -10,6 +10,7 @@ import { TransformInterceptor } from '../src/common/interceptors/transform.inter
 import { PrismaService } from '../src/modules/prisma/prisma.service';
 import { API_ERROR_CODES } from '@whitraworks/types';
 import { SESSION_COOKIE_NAME } from '../src/modules/auth/session.service';
+import { RedisService } from '../src/modules/redis/redis.service';
 
 describe('Auth & Collision-Guarded Registration (e2e)', () => {
   let app: INestApplication;
@@ -38,6 +39,9 @@ describe('Auth & Collision-Guarded Registration (e2e)', () => {
     await app.init();
 
     prisma = app.get(PrismaService);
+    const redis = app.get(RedisService);
+    await redis.invalidateTenant(testSlug);
+    await redis.invalidateTenant('other-workspace-test');
 
     // Clean up any existing test records
     await prisma.base.tenant.deleteMany({
@@ -46,7 +50,7 @@ describe('Auth & Collision-Guarded Registration (e2e)', () => {
     await prisma.base.user.deleteMany({
       where: { email: { in: [testEmail, 'other-user@example.com'] } },
     });
-  });
+  }, 30000);
 
   afterAll(async () => {
     if (prisma) {

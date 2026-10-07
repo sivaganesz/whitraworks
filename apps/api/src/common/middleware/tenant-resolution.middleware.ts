@@ -9,6 +9,7 @@ import { Request, Response, NextFunction } from 'express';
 import { runWithTenantContext } from '@whitraworks/database';
 import { API_ERROR_CODES, TenantContext } from '@whitraworks/types';
 import { PrismaService } from '../../modules/prisma/prisma.service';
+import { RedisService, CachedTenant } from '../../modules/redis/redis.service';
 
 export interface RequestWithTenant extends Request {
   tenant?: TenantContext;
@@ -17,7 +18,10 @@ export interface RequestWithTenant extends Request {
 
 @Injectable()
 export class TenantResolutionMiddleware implements NestMiddleware {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(RedisService) private readonly redis: RedisService
+  ) {}
 
   async use(req: RequestWithTenant, _res: Response, next: NextFunction): Promise<void> {
     const path = req.path;
@@ -51,15 +55,26 @@ export class TenantResolutionMiddleware implements NestMiddleware {
 
     // 3. Resolve Tenant Data Plane (<slug>.localhost or <slug>.whitraworks.com)
     try {
-      const tenant = await this.prisma.base.tenant.findUnique({
-        where: { slug },
-        select: {
-          id: true,
-          slug: true,
-          name: true,
-          status: true,
-        },
-      });
+      // Check high-performance distributed Redis cache first
+      let tenant: CachedTenant | null = await this.redis.getCachedTenant(slug);
+
+      if (!tenant) {
+        const dbTenant = await this.prisma.base.tenant.findUnique({
+          where: { slug },
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            status: true,
+          },
+        });
+
+        if (dbTenant) {
+          tenant = dbTenant;
+          // Cache active/resolved tenant for 5 minutes (300 seconds)
+          await this.redis.setCachedTenant(slug, dbTenant, 300);
+        }
+      }
 
       if (!tenant) {
         if (isExemptPath) {
