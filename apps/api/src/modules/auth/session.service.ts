@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException, Inject } from '@nestjs/common';
-import { createHmac, createHash, timingSafeEqual } from 'node:crypto';
+import { createHmac, createHash, timingSafeEqual, randomUUID } from 'node:crypto';
 import { Response } from 'express';
 import { API_ERROR_CODES } from '@whitraworks/types';
 import { RedisService } from '../redis/redis.service';
@@ -12,6 +12,7 @@ export interface SessionPayload {
   email: string;
   isPlatformSuperadmin: boolean;
   tenantId?: string;
+  jti?: string; // RFC 7519 unique token identifier (prevents sub-second token hash collisions)
   iat?: number; // Issued-at timestamp in seconds
   exp: number; // Unix timestamp in seconds
 }
@@ -26,10 +27,11 @@ export class SessionService {
       'whitraworks-super-secret-session-key-change-in-production-min32chars';
   }
 
-  createSessionToken(payload: Omit<SessionPayload, 'exp' | 'iat'>, expiresInDays = 7): string {
+  createSessionToken(payload: Omit<SessionPayload, 'exp' | 'iat' | 'jti'>, expiresInDays = 7): string {
     const now = Math.floor(Date.now() / 1000);
     const exp = now + expiresInDays * 24 * 60 * 60;
-    const fullPayload: SessionPayload = { ...payload, iat: now, exp };
+    const jti = randomUUID();
+    const fullPayload: SessionPayload = { ...payload, jti, iat: now, exp };
 
     const payloadB64 = Buffer.from(JSON.stringify(fullPayload)).toString('base64url');
     const signature = this.sign(payloadB64);
