@@ -25,6 +25,12 @@ import { CAPABILITY_REGISTRY, CapabilityDefinition } from '@whitraworks/types';
 import { useTenant } from '../context/TenantContext';
 import { useCapabilities } from '../context/CapabilityContext';
 import { fetchApi, ApiError } from '../lib/api';
+import { CatalogView } from '../components/capabilities/CatalogView';
+import { OrdersView } from '../components/capabilities/OrdersView';
+import { KitchenView } from '../components/capabilities/KitchenView';
+import { InventoryView } from '../components/capabilities/InventoryView';
+import { DeliveryView } from '../components/capabilities/DeliveryView';
+import { AnalyticsView } from '../components/capabilities/AnalyticsView';
 
 export function CapabilityModulePage() {
   const location = useLocation();
@@ -235,38 +241,57 @@ export function CapabilityModulePage() {
       </div>
 
       {/* Operational Module Surface */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
-            <CardTitle>{capabilityMeta?.name || capabilityCode} Workspace Operations</CardTitle>
-          </div>
-          <CardDescription>
-            Live domain capability surface running under strict tenant isolation.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-lg border border-dashed border-zinc-200 dark:border-zinc-800 p-8 text-center space-y-3">
-            <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto text-zinc-600 dark:text-zinc-300">
-              <Zap className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-              {capabilityMeta?.name || capabilityCode} Operational Module Ready
-            </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-md mx-auto">
-              This module is governed by the WhitraWorks Capability Configuration Engine. Disabling it in Ops Admin immediately retracts access and removes navigation tabs across all clients.
-            </p>
-            <div className="pt-2 flex justify-center gap-2">
-              <Badge variant="neutral" className="text-xs">
-                Tenant: {slug}
-              </Badge>
-              <Badge variant="neutral" className="text-xs">
-                Category: {capabilityMeta?.category || 'operations'}
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {(() => {
+        switch (capabilityCode) {
+          case 'catalog':
+            return <CatalogView />;
+          case 'orders':
+            return <OrdersView />;
+          case 'kitchen':
+            return <KitchenView />;
+          case 'inventory':
+            return <InventoryView />;
+          case 'delivery':
+            return <DeliveryView />;
+          case 'analytics':
+            return <AnalyticsView />;
+          default:
+            return (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
+                    <CardTitle>{capabilityMeta?.name || capabilityCode} Workspace Operations</CardTitle>
+                  </div>
+                  <CardDescription>
+                    Live domain capability surface running under strict tenant isolation.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-lg border border-dashed border-zinc-200 dark:border-zinc-800 p-8 text-center space-y-3">
+                    <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto text-zinc-600 dark:text-zinc-300">
+                      <Zap className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                      {capabilityMeta?.name || capabilityCode} Operational Module Ready
+                    </h3>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-md mx-auto">
+                      This module is governed by the WhitraWorks Capability Configuration Engine.
+                    </p>
+                    <div className="pt-2 flex justify-center gap-2">
+                      <Badge variant="neutral" className="text-xs">
+                        Tenant: {slug}
+                      </Badge>
+                      <Badge variant="neutral" className="text-xs">
+                        Category: {capabilityMeta?.category || 'operations'}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+        }
+      })()}
     </div>
   );
 }
