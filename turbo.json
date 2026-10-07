@@ -1,5 +1,17 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalPassThroughEnv": [
+    "DATABASE_URL",
+    "REDIS_HOST",
+    "REDIS_PORT",
+    "NODE_ENV",
+    "JWT_SECRET",
+    "COOKIE_SECRET",
+    "PLATFORM_DOMAIN",
+    "RESEND_API_KEY",
+    "RESEND_FROM_EMAIL",
+    "PORT"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -9,7 +21,8 @@
       "dependsOn": ["^build"]
     },
     "test": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "cache": false
     },
     "test:watch": {
       "cache": false,
@@ -27,4 +40,3 @@
     }
   }
 }
-
