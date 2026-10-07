@@ -14,9 +14,12 @@ import { OpsModule } from './modules/ops/ops.module';
 
 import { AppThrottlerGuard } from './modules/redis/app-throttler.guard';
 
+import { MailModule } from './modules/mail/mail.module';
+
 @Module({
   imports: [
     RedisModule,
+    MailModule,
     ThrottlerModule.forRootAsync({
       imports: [RedisModule],
       inject: [ThrottlerStorageRedisService],

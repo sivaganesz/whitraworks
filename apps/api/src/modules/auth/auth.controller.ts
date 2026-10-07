@@ -56,7 +56,7 @@ export class AuthController {
       req.cookies?.[LEGACY_SESSION_COOKIE_NAME] ||
       req.headers.authorization?.replace(/^Bearer\s+/i, '');
 
-    const session = this.sessionService.verifySessionToken(token);
+    const session = await this.sessionService.verifySessionToken(token);
 
     return this.authService.getSessionProfile(
       session.userId,
@@ -77,7 +77,7 @@ export class AuthController {
       req.cookies?.[LEGACY_SESSION_COOKIE_NAME] ||
       req.headers.authorization?.replace(/^Bearer\s+/i, '');
 
-    const session = this.sessionService.verifySessionToken(token);
+    const session = await this.sessionService.verifySessionToken(token);
 
     return this.authService.switchWorkspace(session.userId, dto.targetTenantSlug);
   }
@@ -86,7 +86,19 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Log out and invalidate host-scoped session cookies' })
   @SwaggerResponse({ status: 200, description: 'Logged out successfully' })
-  async logout(@Res({ passthrough: true }) res: Response) {
+  async logout(
+    @Req() req: RequestWithTenant,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    const token =
+      req.cookies?.[SESSION_COOKIE_NAME] ||
+      req.cookies?.[LEGACY_SESSION_COOKIE_NAME] ||
+      req.headers.authorization?.replace(/^Bearer\s+/i, '');
+
+    if (token) {
+      await this.sessionService.blockToken(token);
+    }
+
     this.sessionService.clearSessionCookie(res);
     return { message: 'Successfully logged out.' };
   }

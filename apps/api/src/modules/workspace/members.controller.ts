@@ -208,7 +208,7 @@ export class MembersController {
     let sessionUser: SessionPayload | undefined;
     if (token) {
       try {
-        sessionUser = this.sessionService.verifySessionToken(token);
+        sessionUser = await this.sessionService.verifySessionToken(token);
       } catch {
         // Not authenticated, proceed as unauthenticated caller
       }

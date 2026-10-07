@@ -10,6 +10,7 @@ import { SessionService } from '../auth/session.service';
 import { RegisterDto } from './dto/register.dto';
 import { API_ERROR_CODES, RESERVED_SLUGS, CAPABILITY_REGISTRY } from '@whitraworks/types';
 import { RedisService } from '../redis/redis.service';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class RegistrationService {
@@ -17,7 +18,8 @@ export class RegistrationService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(PasswordService) private readonly passwordService: PasswordService,
     @Inject(SessionService) private readonly sessionService: SessionService,
-    @Inject(RedisService) private readonly redis: RedisService
+    @Inject(RedisService) private readonly redis: RedisService,
+    @Inject(MailService) private readonly mailService: MailService
   ) {}
 
   async checkSlug(rawSlug: string) {
@@ -207,6 +209,15 @@ export class RegistrationService {
       name: result.tenant.name,
       status: 'ACTIVE',
     });
+
+    // 3.8 Dispatch welcome email via Resend
+    await this.mailService.sendWelcomeEmail({
+      to: result.user.email,
+      userName: result.user.firstName,
+      businessName: result.tenant.name,
+      workspaceSlug: result.tenant.slug,
+      workspaceUrl,
+    }).catch(() => {});
 
     return {
       user: {
