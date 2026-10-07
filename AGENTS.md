@@ -9,27 +9,20 @@
 
 This permission protocol is strict, non-negotiable, and must always be followed at all times:
 
-1. **Autonomous Git Operations (PERMITTED WITHOUT ASKING)**:
-   * The user has explicitly granted full permission to autonomously stage, commit, push, and merge branches (`git add`, `git commit`, `git push`, `git merge`, `git checkout`).
-   * Never prompt or ask the user for permission for Git operations inside this repository.
+1. **Actions Requiring Explicit User Permission (ALWAYS ASK FIRST)**:
+   * **`git commit`**
+   * **`git push`**
+   * **`git merge`**
+   * **Accessing, reading, or modifying anything outside the project directory (`e:\PROJECTS\whitraworks`)** or making system-level/global OS configuration changes.
 
-2. **Autonomous Project Operations (PERMITTED WITHOUT ASKING)**:
-   * For ALL internal development actions inside the project directory, **proceed autonomously without asking for permission**:
-     * Searching and inspecting code (`git grep`, ripgrep, find, dir).
-     * Staging, committing, and pushing git changes (`git show`, `git diff`, `git status`, `git log`, `git add`, `git commit`, `git push`).
-     * Running workspace and package commands (`pnpm --filter ...`, `pnpm run ...`, `npx ...`, `node ...`, `turbo ...`).
-     * Creating, editing, or deleting project files and directories.
-     * Installing, updating, or removing dependencies (`pnpm add`, `pnpm install`).
-     * Running builds, linters, compilers, and test suites (`pnpm build`, `pnpm test`, `vitest`).
-     * Executing database schema generations, Prisma migrations, and seed scripts (`pnpm db:seed`, `prisma ...`).
-     * Launching or stopping local Docker services (`docker compose up -d`).
-     * Running local curls, HTTP checks, or test scripts inside the workspace.
-   * **Under no circumstance should the agent ask for user permission, prompt, or hesitate for any command within `e:\PROJECTS\whitraworks`.**
-
-3. **System-Level & External Operations (Explicit Permission Required)**:
-   * **Always ask for user permission first** before:
-     * Any system-level update or global OS/tooling configuration change.
-     * Creating, modifying, or reading anything outside the project workspace directory (`e:\PROJECTS\whitraworks`).
+2. **Autonomous Project Operations (DO NOT ASK — PROCEED AUTONOMOUSLY)**:
+   * **General Commands**: `git status`, `git diff`, `git add`, `git checkout`, `git log`, `git grep`, inspecting code, directory listing/access.
+   * **Package Management & Scripts (`pnpm`)**: `pnpm --filter ...`, `pnpm run ...`, `pnpm add`, `pnpm install`, `turbo ...`, `npx ...`, `node ...`.
+   * **Builds & Test Suites**: `pnpm build`, `pnpm test`, `vitest`, `tsc`.
+   * **Docker Services**: `docker ps`, `docker compose up -d`, `docker exec ...`.
+   * **Files & Directories**: Creating, editing, reading, and deleting files and directories within `e:\PROJECTS\whitraworks`.
+   * **Database Tooling**: Prisma migrations, client generation, and database seeding (`pnpm db:seed`, `prisma ...`).
+   * **Under no circumstance should the agent prompt or ask the user for permission for any internal command or directory access within `e:\PROJECTS\whitraworks` other than `git commit`, `git push`, and `git merge`.**
 
 ---
 

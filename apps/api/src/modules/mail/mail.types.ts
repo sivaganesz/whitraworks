@@ -37,3 +37,4 @@ export interface PasswordResetEmailPayload {
   resetUrl: string;
   expiresAt: string | Date;
 }
+
