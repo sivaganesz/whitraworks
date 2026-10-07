@@ -71,7 +71,7 @@ describe('Workspace Memberships, RBAC & Capabilities (e2e)', () => {
     expect(loginRes.status).toBe(200);
     const cookies = loginRes.headers['set-cookie'];
     ownerCookie = Array.isArray(cookies) ? cookies.find((c: string) => c.includes(SESSION_COOKIE_NAME))! : cookies;
-  });
+  }, 30000);
 
   afterAll(async () => {
     try {

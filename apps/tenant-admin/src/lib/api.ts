@@ -301,3 +301,86 @@ export interface TenantCapability {
   config: Record<string, unknown>;
 }
 
+export interface RegisterPayload {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  businessName: string;
+  slug: string;
+}
+
+export interface RegisterResult {
+  user: User;
+  tenant: {
+    id: string;
+    slug: string;
+    name: string;
+    status: string;
+  };
+}
+
+export interface CheckSlugResult {
+  available: boolean;
+  reason?: string;
+  details?: Record<string, unknown>;
+}
+
+export interface InvitationDetailsResponse {
+  id: string;
+  email: string;
+  role: {
+    id: string;
+    code: string;
+    name: string;
+  };
+  tenant: {
+    id: string;
+    slug: string;
+    name: string;
+    logoUrl?: string | null;
+  };
+  expiresAt: string;
+  isExpired: boolean;
+}
+
+export interface AcceptInvitationPayload {
+  token: string;
+  password?: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+export interface AcceptInvitationResult {
+  user: User;
+  activeWorkspace: ActiveWorkspace;
+}
+
+export const publicApi = {
+  checkSlug: async (slug: string): Promise<CheckSlugResult> => {
+    return fetchApi<CheckSlugResult>(`/public/check-slug?slug=${encodeURIComponent(slug)}`, {
+      method: 'GET',
+    });
+  },
+
+  register: async (payload: RegisterPayload): Promise<RegisterResult> => {
+    return fetchApi<RegisterResult>('/public/register', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  getInvitationDetails: async (token: string): Promise<InvitationDetailsResponse> => {
+    return fetchApi<InvitationDetailsResponse>(`/workspace/invitations/${token}`, {
+      method: 'GET',
+    });
+  },
+
+  acceptInvitation: async (payload: AcceptInvitationPayload): Promise<AcceptInvitationResult> => {
+    return fetchApi<AcceptInvitationResult>('/workspace/invitations/accept', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+};
+

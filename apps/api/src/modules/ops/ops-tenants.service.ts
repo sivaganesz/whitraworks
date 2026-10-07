@@ -6,11 +6,13 @@ import { UpdateTenantCapabilitiesDto } from './dto/update-tenant-capabilities.dt
 import { ListAuditLogsDto } from './dto/list-audit-logs.dto';
 import { TenantStatus, Prisma } from '@whitraworks/database';
 import { CAPABILITY_REGISTRY } from '@whitraworks/types';
+import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class OpsTenantsService {
   constructor(
-    @Inject(PrismaService) private readonly prisma: PrismaService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(RedisService) private readonly redis: RedisService
   ) {}
 
   async listTenants(dto: ListTenantsDto) {
@@ -129,6 +131,9 @@ export class OpsTenantsService {
 
       return updatedTenant;
     });
+
+    // Invalidate distributed Redis cache immediately so changes take effect across all nodes
+    await this.redis.invalidateTenant(tenant.slug);
 
     return {
       success: true,

@@ -6,6 +6,8 @@ import { CapabilityProvider } from './context/CapabilityContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { TenantLayout } from './components/layout/TenantLayout';
 import { LoginPage } from './pages/Login';
+import { RegisterPage } from './pages/Register';
+import { AcceptInvitePage } from './pages/AcceptInvite';
 import { DashboardPage } from './pages/Dashboard';
 import { MembersPage } from './pages/Members';
 import { SettingsPage } from './pages/Settings';
@@ -19,8 +21,10 @@ export function App() {
           <CapabilityProvider>
             <BrowserRouter>
               <Routes>
-                {/* Public Authentication Route */}
+                {/* Public Onboarding & Auth Routes */}
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/invite/accept" element={<AcceptInvitePage />} />
 
                 {/* Tenant Workspace Protected Area */}
                 <Route

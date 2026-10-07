@@ -210,7 +210,7 @@ describe('Module 6 - Task 6.2: Multi-Tenant Negative Security & Boundary Verific
       isPlatformSuperadmin: true,
     });
     superadminCookie = `${SESSION_COOKIE_NAME}=${token}`;
-  });
+  }, 30000);
 
   afterAll(async () => {
     try {

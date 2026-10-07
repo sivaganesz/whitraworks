@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   Card,
   CardHeader,
@@ -173,6 +173,16 @@ export function LoginPage() {
                   </>
                 )}
               </Button>
+
+              <div className="text-center text-xs text-zinc-500 dark:text-zinc-400 pt-2">
+                Need to create a business workspace?{' '}
+                <Link
+                  to="/register"
+                  className="font-medium text-zinc-900 dark:text-zinc-100 hover:underline"
+                >
+                  Register here
+                </Link>
+              </div>
             </form>
           </CardContent>
         </Card>

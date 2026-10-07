@@ -10,6 +10,7 @@ import {
   Inject,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse as SwaggerResponse } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
 import { RegistrationService } from './registration.service';
 import { SessionService } from '../auth/session.service';
@@ -32,6 +33,7 @@ export class RegistrationController {
   }
 
   @Post('register')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Public workspace registration with Scenario A email collision guardrails' })
   @SwaggerResponse({ status: 201, description: 'User, Tenant, and Owner membership created atomically' })
