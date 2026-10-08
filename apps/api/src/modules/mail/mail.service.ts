@@ -16,7 +16,9 @@ export class MailService {
   constructor() {
     this.apiKey = process.env['RESEND_API_KEY'];
     this.fromAddress =
-      process.env['EMAIL_FROM'] || 'WhitraWorks Platform <onboarding@resend.dev>';
+      process.env['RESEND_FROM_EMAIL'] ||
+      process.env['EMAIL_FROM'] ||
+      'WhitraWorks Platform <onboarding@resend.dev>';
 
     if (!this.apiKey) {
       this.logger.warn(

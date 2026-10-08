@@ -1,0 +1,159 @@
+# =======================================================
+# WhitraWorks Multi-Tenant Platform — Staging Compose
+# Targeted for Azure VM (Standard_B2ats_v2: 2 vCPU, 1 GiB RAM)
+# Uses pre-built images from GitHub Container Registry (GHCR)
+# =======================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: whitraworks-stage-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be configured in .env.stage}
+      POSTGRES_DB: ${POSTGRES_DB:-whitraworks_stage}
+    volumes:
+      - postgres_stage_data:/var/lib/postgresql/data
+      - ./infrastructure/docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-whitraworks_stage}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 160m
+    mem_reservation: 64m
+    deploy:
+      resources:
+        limits:
+          memory: 160M
+        reservations:
+          memory: 64M
+    networks:
+      - whitraworks-stage-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: whitraworks-stage-redis
+    restart: always
+    volumes:
+      - redis_stage_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 48m
+    mem_reservation: 24m
+    deploy:
+      resources:
+        limits:
+          memory: 48M
+        reservations:
+          memory: 24M
+    networks:
+      - whitraworks-stage-net
+
+  api:
+    image: ghcr.io/sivaganesz/whitraworks-api:stage
+    container_name: whitraworks-stage-api
+    restart: always
+    environment:
+      NODE_ENV: staging
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be configured in .env.stage}@postgres:5432/${POSTGRES_DB:-whitraworks_stage}?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      COOKIE_SECRET: ${COOKIE_SECRET:?COOKIE_SECRET must be configured in .env.stage (min 32 chars)}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be configured in .env.stage (min 32 chars)}
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET must be configured in .env.stage (min 32 chars)}
+      INITIAL_SUPERADMIN_EMAIL: ${INITIAL_SUPERADMIN_EMAIL:-superadmin@whitraworks.online}
+      INITIAL_SUPERADMIN_PASSWORD: ${INITIAL_SUPERADMIN_PASSWORD:?INITIAL_SUPERADMIN_PASSWORD must be configured in .env.stage}
+      INITIAL_SUPERADMIN_FIRST_NAME: ${INITIAL_SUPERADMIN_FIRST_NAME:-Root}
+      INITIAL_SUPERADMIN_LAST_NAME: ${INITIAL_SUPERADMIN_LAST_NAME:-Superadmin}
+      PLATFORM_DOMAIN: stage.whitraworks.online
+      ROOT_DOMAIN: stage.whitraworks.online
+      API_BASE_URL: http://api.stage.whitraworks.online
+      OPS_ADMIN_URL: http://ops.stage.whitraworks.online
+      TENANT_ADMIN_BASE_DOMAIN: stage.whitraworks.online
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-WhitraWorks <notifications@whitraworks.online>}
+      NODE_OPTIONS: "--max-old-space-size=256"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    mem_limit: 384m
+    mem_reservation: 128m
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+        reservations:
+          memory: 128M
+    networks:
+      - whitraworks-stage-net
+
+  ops-admin:
+    image: ghcr.io/sivaganesz/whitraworks-ops-admin:stage
+    container_name: whitraworks-stage-ops-admin
+    restart: always
+    mem_limit: 48m
+    mem_reservation: 16m
+    deploy:
+      resources:
+        limits:
+          memory: 48M
+        reservations:
+          memory: 16M
+    networks:
+      - whitraworks-stage-net
+
+  tenant-admin:
+    image: ghcr.io/sivaganesz/whitraworks-tenant-admin:stage
+    container_name: whitraworks-stage-tenant-admin
+    restart: always
+    mem_limit: 48m
+    mem_reservation: 16m
+    deploy:
+      resources:
+        limits:
+          memory: 48M
+        reservations:
+          memory: 16M
+    networks:
+      - whitraworks-stage-net
+
+  gateway:
+    image: nginx:1.27-alpine
+    container_name: whitraworks-stage-gateway
+    restart: always
+    ports:
+      - '80:80'
+      # - '443:443' # Enable after HTTPS certificate provisioning
+    volumes:
+      - ./infrastructure/docker/nginx-gateway.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+      - ops-admin
+      - tenant-admin
+    mem_limit: 48m
+    mem_reservation: 16m
+    deploy:
+      resources:
+        limits:
+          memory: 48M
+        reservations:
+          memory: 16M
+    networks:
+      - whitraworks-stage-net
+
+networks:
+  whitraworks-stage-net:
+    driver: bridge
+
+volumes:
+  postgres_stage_data:
+  redis_stage_data:
+

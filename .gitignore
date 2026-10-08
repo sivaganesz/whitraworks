@@ -17,9 +17,9 @@ pnpm-debug.log*
 
 # Environment & Secrets
 .env
-.env.local
-.env.*.local
+.env.*
 !.env.example
+!.env.*.example
 
 # IDE & Editor
 .vscode/

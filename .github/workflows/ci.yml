@@ -5,10 +5,12 @@ on:
     branches:
       - main
       - master
+      - configuration
   pull_request:
     branches:
       - main
       - master
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -165,9 +167,12 @@ jobs:
         run: pnpm test
 
   docker-build-verification:
-    name: Multi-Stage Docker Container Build Verification
+    name: Multi-Stage Docker Container Build & GHCR Publish
     runs-on: ubuntu-latest
     needs: [lint-and-typecheck]
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -175,26 +180,48 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build API Image
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Determine Docker Image Tags
+        id: tags
+        shell: bash
+        run: |
+          if [ "${{ github.ref_name }}" = "configuration" ]; then
+            echo "API_TAGS=ghcr.io/sivaganesz/whitraworks-api:stage,ghcr.io/sivaganesz/whitraworks-api:${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "OPS_TAGS=ghcr.io/sivaganesz/whitraworks-ops-admin:stage,ghcr.io/sivaganesz/whitraworks-ops-admin:${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "TENANT_TAGS=ghcr.io/sivaganesz/whitraworks-tenant-admin:stage,ghcr.io/sivaganesz/whitraworks-tenant-admin:${{ github.sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "API_TAGS=ghcr.io/sivaganesz/whitraworks-api:latest,ghcr.io/sivaganesz/whitraworks-api:${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "OPS_TAGS=ghcr.io/sivaganesz/whitraworks-ops-admin:latest,ghcr.io/sivaganesz/whitraworks-ops-admin:${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "TENANT_TAGS=ghcr.io/sivaganesz/whitraworks-tenant-admin:latest,ghcr.io/sivaganesz/whitraworks-tenant-admin:${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and Push API Image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: apps/api/Dockerfile
-          push: false
-          tags: whitraworks/api:test-ci
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.tags.outputs.API_TAGS }}
 
-      - name: Build Ops Admin Image
+      - name: Build and Push Ops Admin Image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: apps/ops-admin/Dockerfile
-          push: false
-          tags: whitraworks/ops-admin:test-ci
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.tags.outputs.OPS_TAGS }}
 
-      - name: Build Tenant Admin Image
+      - name: Build and Push Tenant Admin Image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: apps/tenant-admin/Dockerfile
-          push: false
-          tags: whitraworks/tenant-admin:test-ci
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.tags.outputs.TENANT_TAGS }}
