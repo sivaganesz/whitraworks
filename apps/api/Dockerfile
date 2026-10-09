@@ -39,19 +39,20 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=4000
+ENV PATH="/app/node_modules/.bin:$PATH"
 
 # Copy root manifests & node_modules
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
-COPY --from=builder /app/node_modules ./node_modules
+COPY --chown=node:node --from=builder /app/package.json ./package.json
+COPY --chown=node:node --from=builder /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --chown=node:node --from=builder /app/node_modules ./node_modules
 
 # Copy package dists and generated prisma client
-COPY --from=builder /app/packages/types ./packages/types
-COPY --from=builder /app/packages/database ./packages/database
-COPY --from=builder /app/packages/config ./packages/config
+COPY --chown=node:node --from=builder /app/packages/types ./packages/types
+COPY --chown=node:node --from=builder /app/packages/database ./packages/database
+COPY --chown=node:node --from=builder /app/packages/config ./packages/config
 
 # Copy compiled API artifact
-COPY --from=builder /app/apps/api ./apps/api
+COPY --chown=node:node --from=builder /app/apps/api ./apps/api
 
 # Run as non-root user
 USER node

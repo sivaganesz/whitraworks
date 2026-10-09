@@ -191,17 +191,29 @@ To prevent URL encoding syntax issues with `@`, `#`, or `/`:
   ```
   *(e.g., `a7c390ef10842e88a381cd09b78291f0`)*
 
-### 4. Database Migrations & Initial Superadmin Seeding (Run Once on VM)
-After running `docker compose -f docker-compose.stage.yml up -d`:
-1. Push database schema to PostgreSQL:
+### 4. Database Migrations & Initial Superadmin Seeding (Run Before Starting Full Stack)
+To ensure the API container starts against a fully prepared database without startup crashes:
+
+1. **Start only PostgreSQL and Redis first:**
    ```bash
-   docker compose -f docker-compose.stage.yml exec api npx prisma db push --schema=packages/database/prisma/schema.prisma
+   docker compose --env-file .env.stage -f docker-compose.stage.yml up -d postgres redis
    ```
-2. Seed initial permissions and Platform Superadmin account:
+
+2. **Push database schema using the pinned Prisma CLI (One-off ephemeral container):**
    ```bash
-   docker compose -f docker-compose.stage.yml exec api npx tsx packages/database/prisma/seed.ts
+   docker compose --env-file .env.stage -f docker-compose.stage.yml run --rm api pnpm db:push
    ```
-3. Superadmin is now ready to log in at `http://ops.stage.whitraworks.online` using credentials configured in `.env.stage`.
+
+3. **Seed initial permissions, default roles, and Platform Superadmin account:**
+   ```bash
+   docker compose --env-file .env.stage -f docker-compose.stage.yml run --rm api pnpm db:seed
+   ```
+
+4. **Start the complete platform stack:**
+   ```bash
+   docker compose --env-file .env.stage -f docker-compose.stage.yml up -d
+   ```
+   *Superadmin is now ready to log in at `http://ops.stage.whitraworks.online` using credentials configured in `.env.stage`.*
 
 ---
 
@@ -218,9 +230,9 @@ After running `docker compose -f docker-compose.stage.yml up -d`:
 | **2.3** | Configure Nginx Staging Routing (`nginx-gateway.conf`) | ✅ Prepared | Staging hostnames added (HTTP port 80) |
 | **2.4** | Create Staging Docker Compose (`docker-compose.stage.yml`) | ✅ Prepared | Strict memory limits for 1 GiB RAM |
 | **2.5** | Create Staging Environment Template (`.env.stage.example`) | ✅ Prepared | Staging environment placeholders |
-| **3.1** | GHCR Automated Image Publishing Workflow | ⏳ Next | Push pre-built images via GitHub Actions |
-| **3.2** | VM 2GB Swap buffer & Docker daemon setup | ⏳ Next | Run swap configuration on Azure VM |
-| **3.3** | Deploy Staging Stack on Azure VM | ⏳ Next | `docker compose -f docker-compose.stage.yml up -d` |
+| **3.1** | GHCR Automated Image Publishing Workflow | ✅ Completed | Builds and pushes `:stage` images |
+| **3.2** | VM 2GB Swap buffer & Docker daemon setup | ⏳ In Progress | Azure VM environment preparation |
+| **3.3** | Deploy Staging Stack on Azure VM | ⏳ Next | `docker compose --env-file .env.stage -f docker-compose.stage.yml up -d` |
 | **3.4** | Provision Wildcard HTTPS (`*.stage.whitraworks.online`) | ⏳ Next | After HTTP port 80 verification |
 
 ---
