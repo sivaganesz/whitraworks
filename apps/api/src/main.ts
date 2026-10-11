@@ -7,6 +7,8 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
+import { corsOptions } from './common/config/cors.config';
+
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
@@ -15,28 +17,8 @@ async function bootstrap() {
   const cookieSecret = process.env['COOKIE_SECRET'] || 'whitraworks-cookie-signer-secret-min32chars';
   app.use(cookieParser(cookieSecret));
 
-  // CORS configuration supporting dynamic subdomains in development and production
-  app.enableCors({
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-      // Allow server-to-server or requests without origin (like curl, postman)
-      if (!origin) return callback(null, true);
-
-      const allowedPatterns = [
-        /^http:\/\/(.+\.)?localhost:[0-9]+$/,
-        /^https:\/\/(.+\.)?whitraworks\.com$/,
-      ];
-
-      const isAllowed = allowedPatterns.some((pattern) => pattern.test(origin));
-      if (isAllowed) {
-        callback(null, true);
-      } else {
-        callback(new Error(`Origin ${origin} not allowed by CORS`));
-      }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id', 'Cookie'],
-  });
+  // CORS configuration supporting dynamic subdomains in development, staging, and production
+  app.enableCors(corsOptions);
 
   // Global Class-Validator Pipeline
   app.useGlobalPipes(
