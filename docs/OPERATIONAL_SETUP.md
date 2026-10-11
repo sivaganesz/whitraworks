@@ -215,6 +215,39 @@ To ensure the API container starts against a fully prepared database without sta
    ```
    *Superadmin is now ready to log in at `http://ops.stage.whitraworks.online` using credentials configured in `.env.stage`.*
 
+### 5. Staging HTTPS Gateway & Operations Dashboard CORS Resolution
+
+#### 5.1 Issue & Root Cause
+During post-HTTPS verification, attempting to log in to the Operations Dashboard at `https://ops.stage.whitraworks.online` resulted in an `INTERNAL_SERVER_ERROR` (HTTP 500). The API's bootstrap CORS configuration previously only permitted `localhost` and `whitraworks.com` domains; incoming requests bearing `Origin: https://ops.stage.whitraworks.online` were rejected by the callback, throwing an uncaught Error in the NestJS HTTP pipeline.
+
+#### 5.2 Resolution & Code Changes (Commit `00db329`)
+* **Commit:** `00db329` (`00db3299252a71f5a9e8e730e2a3c1d4bebfc8f3`) on branch `configuration`.
+* **Centralized Configuration (`apps/api/src/common/config/cors.config.ts`):** Added explicit support for `stage.whitraworks.online` and `whitraworks.online` using anchored regular expressions that strictly disallow nested subdomains.
+* **Non-Throwing Rejection:** Updated the CORS callback to invoke `callback(null, false)` instead of throwing an Error for disallowed origins, preserving clean server logs and preventing false 500 alarms while ensuring the browser omits `Access-Control-Allow-Origin`.
+* **Test Coverage (`apps/api/test/cors.spec.ts`):** 37 tests validating origin allowlists, deceptive suffix rejections, preflight handling, and authentication/authorization invariance.
+
+#### 5.3 Staging Rollout & Deployment Details
+* **Repository Path on VM:** `/home/azureuser/whitraworks`
+* **Compose File:** `docker-compose.stage.yml`
+* **Environment File:** `.env.stage`
+* **Retained Rollback Image ID:** `sha256:36ae63442937862a87e4c4a0d51fa89962f4c2b49cf9741ef75ded18d1019293`
+* **Deployed API Image ID:** `sha256:b702d0b5dd3c2c4ce6657c02d0ad14cc0c1d88f55b8ad41f0c348ef44f39b304` (`ghcr.io/sivaganesz/whitraworks-api:stage`)
+* **Container Recreated:** Recreated using `docker compose --env-file .env.stage -f docker-compose.stage.yml up -d --no-deps api` without intentionally restarting PostgreSQL, Redis, or Nginx.
+
+#### 5.4 Verification Results
+1. **Internal Container Health:**
+   ```bash
+   sudo docker exec whitraworks-stage-api wget -qO- http://localhost:4000/health
+   ```
+   *Result:* Status `healthy`, Database `connected` (`{"success":true,"data":{"status":"healthy","database":"connected",...}}`).
+2. **Public Gateway HTTPS Health:**
+   ```bash
+   curl -fsS --max-time 10 https://api.stage.whitraworks.online/health
+   ```
+   *Result:* Status `healthy`, Database `connected`. TLS certificate and proxy pass-through confirmed.
+3. **Operations Dashboard Login:**
+   *Result:* Confirmed successful login at `https://ops.stage.whitraworks.online`. The dashboard rendered with zero CORS errors.
+
 ---
 
 ## 🚦 Execution Checklist & Current Status
@@ -232,8 +265,9 @@ To ensure the API container starts against a fully prepared database without sta
 | **2.5** | Create Staging Environment Template (`.env.stage.example`) | ✅ Prepared | Staging environment placeholders |
 | **3.1** | GHCR Automated Image Publishing Workflow | ✅ Completed | Builds and pushes `:stage` images |
 | **3.2** | VM 2GB Swap buffer & Docker daemon setup | ⏳ In Progress | Azure VM environment preparation |
-| **3.3** | Deploy Staging Stack on Azure VM | ⏳ Next | `docker compose --env-file .env.stage -f docker-compose.stage.yml up -d` |
-| **3.4** | Provision Wildcard HTTPS (`*.stage.whitraworks.online`) | ⏳ Next | After HTTP port 80 verification |
+| **3.3** | Deploy Staging Stack on Azure VM | ✅ Completed | Stack deployed and running via `docker-compose.stage.yml` |
+| **3.4** | Provision Wildcard HTTPS (`*.stage.whitraworks.online`) | ✅ Completed | TLS certificates mounted and verified via HTTPS gateway |
+| **3.5** | Operations Dashboard CORS Fix & Login Verification | ✅ Completed | Commit `00db329`; image `sha256:b702d0...` |
 
 ---
 
