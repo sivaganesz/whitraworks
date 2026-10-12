@@ -4,12 +4,14 @@ on:
   push:
     branches:
       - main
-      - master
       - configuration
+      - 'feature/**'
+      - 'fix/**'
+      - 'bugfix/**'
   pull_request:
     branches:
       - main
-      - master
+      - configuration
   workflow_dispatch:
 
 concurrency:
@@ -169,7 +171,7 @@ jobs:
   docker-build-verification:
     name: Multi-Stage Docker Container Build & GHCR Publish
     runs-on: ubuntu-latest
-    needs: [lint-and-typecheck]
+    needs: [lint-and-typecheck, test-suites]
     permissions:
       contents: read
       packages: write
@@ -181,7 +183,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to GitHub Container Registry
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && (github.ref_name == 'main' || github.ref_name == 'configuration')
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -196,10 +198,14 @@ jobs:
             echo "API_TAGS=ghcr.io/sivaganesz/whitraworks-api:stage,ghcr.io/sivaganesz/whitraworks-api:${{ github.sha }}" >> $GITHUB_OUTPUT
             echo "OPS_TAGS=ghcr.io/sivaganesz/whitraworks-ops-admin:stage,ghcr.io/sivaganesz/whitraworks-ops-admin:${{ github.sha }}" >> $GITHUB_OUTPUT
             echo "TENANT_TAGS=ghcr.io/sivaganesz/whitraworks-tenant-admin:stage,ghcr.io/sivaganesz/whitraworks-tenant-admin:${{ github.sha }}" >> $GITHUB_OUTPUT
-          else
+          elif [ "${{ github.ref_name }}" = "main" ]; then
             echo "API_TAGS=ghcr.io/sivaganesz/whitraworks-api:latest,ghcr.io/sivaganesz/whitraworks-api:${{ github.sha }}" >> $GITHUB_OUTPUT
             echo "OPS_TAGS=ghcr.io/sivaganesz/whitraworks-ops-admin:latest,ghcr.io/sivaganesz/whitraworks-ops-admin:${{ github.sha }}" >> $GITHUB_OUTPUT
             echo "TENANT_TAGS=ghcr.io/sivaganesz/whitraworks-tenant-admin:latest,ghcr.io/sivaganesz/whitraworks-tenant-admin:${{ github.sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "API_TAGS=ghcr.io/sivaganesz/whitraworks-api:${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "OPS_TAGS=ghcr.io/sivaganesz/whitraworks-ops-admin:${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "TENANT_TAGS=ghcr.io/sivaganesz/whitraworks-tenant-admin:${{ github.sha }}" >> $GITHUB_OUTPUT
           fi
 
       - name: Build and Push API Image
@@ -207,7 +213,7 @@ jobs:
         with:
           context: .
           file: apps/api/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ github.event_name != 'pull_request' && (github.ref_name == 'main' || github.ref_name == 'configuration') }}
           tags: ${{ steps.tags.outputs.API_TAGS }}
 
       - name: Build and Push Ops Admin Image
@@ -215,7 +221,7 @@ jobs:
         with:
           context: .
           file: apps/ops-admin/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ github.event_name != 'pull_request' && (github.ref_name == 'main' || github.ref_name == 'configuration') }}
           tags: ${{ steps.tags.outputs.OPS_TAGS }}
 
       - name: Build and Push Tenant Admin Image
@@ -223,5 +229,5 @@ jobs:
         with:
           context: .
           file: apps/tenant-admin/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ github.event_name != 'pull_request' && (github.ref_name == 'main' || github.ref_name == 'configuration') }}
           tags: ${{ steps.tags.outputs.TENANT_TAGS }}
