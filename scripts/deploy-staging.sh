@@ -50,6 +50,9 @@ PREV_OPS_IMAGE=""
 PREV_TENANT_IMAGE=""
 LOCK_ACQUIRED=""
 
+# Docker execution command array (defaults to direct docker, auto-detects sudo -n)
+DOCKER_CMD=("docker")
+
 # ------------------------------------------------------------------------------
 # Logging Utilities (Guaranteed Zero Secret Leakage)
 # ------------------------------------------------------------------------------
@@ -66,12 +69,37 @@ log_error() {
 }
 
 # ------------------------------------------------------------------------------
+# Docker Command Execution Strategy (Direct vs Passwordless Sudo)
+# ------------------------------------------------------------------------------
+detect_docker_runner() {
+    if [[ -n "${DOCKER_RUNNER:-}" ]]; then
+        read -r -a DOCKER_CMD <<< "${DOCKER_RUNNER}"
+        log_info "Docker runner: using explicit DOCKER_RUNNER override: '${DOCKER_CMD[*]}'."
+        return 0
+    fi
+
+    if docker info >/dev/null 2>&1; then
+        DOCKER_CMD=("docker")
+        log_info "Docker runner: verified direct non-root access ('docker')."
+    elif command -v sudo >/dev/null 2>&1 && sudo -n docker info >/dev/null 2>&1; then
+        DOCKER_CMD=("sudo" "-n" "docker")
+        log_info "Docker runner: direct access unavailable; verified passwordless sudo ('sudo -n docker')."
+    else
+        DOCKER_CMD=("docker")
+        log_warn "Docker runner: neither direct access nor 'sudo -n' connected to Docker daemon."
+    fi
+}
+
+# ------------------------------------------------------------------------------
 # Concurrency Lock (Flock with Atomic Mkdir Fallback)
 # ------------------------------------------------------------------------------
 acquire_lock() {
     log_info "Checking deployment concurrency lock..."
     if command -v flock >/dev/null 2>&1; then
-        exec 200>"${LOCK_FILE}"
+        if ! exec 200>>"${LOCK_FILE}"; then
+            log_error "Cannot open deployment lock file '${LOCK_FILE}' (permission denied or unwriteable). Aborting."
+            exit 1
+        fi
         if ! flock -n 200; then
             log_error "Another deployment is actively running (lock held on ${LOCK_FILE}). Aborting."
             exit 1
@@ -86,8 +114,9 @@ acquire_lock() {
         LOCK_ACQUIRED="mkdir"
     fi
 
-    # Register trap to ensure lock is released on catchable termination signals
+    # Register traps to ensure lock is released on termination signals or script exit
     trap 'cleanup_lock_on_signal' INT TERM HUP
+    trap 'release_lock' EXIT
     log_info "Deployment lock acquired successfully."
 }
 
@@ -164,12 +193,12 @@ execute_rollback() {
     log_warn "  Tenant Admin: ${PREV_TENANT_IMAGE} -> ${TENANT_IMAGE_TAG}"
 
     local rollback_failed=0
-    docker tag "${PREV_API_IMAGE}" "${API_IMAGE_TAG}" 2>/dev/null || rollback_failed=1
-    docker tag "${PREV_OPS_IMAGE}" "${OPS_IMAGE_TAG}" 2>/dev/null || rollback_failed=1
-    docker tag "${PREV_TENANT_IMAGE}" "${TENANT_IMAGE_TAG}" 2>/dev/null || rollback_failed=1
+    "${DOCKER_CMD[@]}" tag "${PREV_API_IMAGE}" "${API_IMAGE_TAG}" 2>/dev/null || rollback_failed=1
+    "${DOCKER_CMD[@]}" tag "${PREV_OPS_IMAGE}" "${OPS_IMAGE_TAG}" 2>/dev/null || rollback_failed=1
+    "${DOCKER_CMD[@]}" tag "${PREV_TENANT_IMAGE}" "${TENANT_IMAGE_TAG}" 2>/dev/null || rollback_failed=1
 
     log_warn "Recreating application containers targeting restored previous images..."
-    if [[ "${rollback_failed}" -eq 0 ]] && docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --no-deps "${API_SERVICE}" "${OPS_SERVICE}" "${TENANT_SERVICE}"; then
+    if [[ "${rollback_failed}" -eq 0 ]] && "${DOCKER_CMD[@]}" compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --no-deps "${API_SERVICE}" "${OPS_SERVICE}" "${TENANT_SERVICE}"; then
         log_warn "Application containers successfully reverted to previous images."
     else
         log_error "CRITICAL: Rollback recreation failed! Application containers could not be restored to previous images."
@@ -183,7 +212,7 @@ execute_rollback() {
     fi
 
     log_warn "Container logs for failed deployment diagnostics:"
-    docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" logs --tail 30 "${API_SERVICE}" 2>/dev/null || true
+    "${DOCKER_CMD[@]}" compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" logs --tail 30 "${API_SERVICE}" 2>/dev/null || true
 
     release_lock
     exit "${orig_exit_code}"
@@ -200,8 +229,16 @@ validate_prerequisites() {
         exit 1
     fi
 
-    if ! docker compose version >/dev/null 2>&1; then
-        log_error "Docker Compose (v2) plugin is not available."
+    detect_docker_runner
+
+    if ! "${DOCKER_CMD[@]}" info >/dev/null 2>&1; then
+        log_error "Docker daemon is not accessible via '${DOCKER_CMD[*]} info'."
+        log_error "Ensure Docker is running and azureuser has direct Docker permissions or passwordless sudo."
+        exit 1
+    fi
+
+    if ! "${DOCKER_CMD[@]}" compose version >/dev/null 2>&1; then
+        log_error "Docker Compose (v2) plugin is not available via '${DOCKER_CMD[*]} compose'."
         exit 1
     fi
 
@@ -216,9 +253,9 @@ validate_prerequisites() {
     fi
 
     # Record current running image IDs before pulling new images (without leaking secrets)
-    PREV_API_IMAGE="$(docker inspect --format='{{.Image}}' "${API_CONTAINER}" 2>/dev/null || true)"
-    PREV_OPS_IMAGE="$(docker inspect --format='{{.Image}}' "${OPS_CONTAINER}" 2>/dev/null || true)"
-    PREV_TENANT_IMAGE="$(docker inspect --format='{{.Image}}' "${TENANT_CONTAINER}" 2>/dev/null || true)"
+    PREV_API_IMAGE="$("${DOCKER_CMD[@]}" inspect --format='{{.Image}}' "${API_CONTAINER}" 2>/dev/null || true)"
+    PREV_OPS_IMAGE="$("${DOCKER_CMD[@]}" inspect --format='{{.Image}}' "${OPS_CONTAINER}" 2>/dev/null || true)"
+    PREV_TENANT_IMAGE="$("${DOCKER_CMD[@]}" inspect --format='{{.Image}}' "${TENANT_CONTAINER}" 2>/dev/null || true)"
 
     if [[ -n "${PREV_API_IMAGE}" ]]; then
         log_info "Captured running API image:          ${PREV_API_IMAGE}"
@@ -236,7 +273,7 @@ validate_prerequisites() {
 # ------------------------------------------------------------------------------
 pull_images() {
     log_info "Step 2/5: Pulling latest :stage images from GitHub Container Registry..."
-    docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" pull "${API_SERVICE}" "${OPS_SERVICE}" "${TENANT_SERVICE}"
+    "${DOCKER_CMD[@]}" compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" pull "${API_SERVICE}" "${OPS_SERVICE}" "${TENANT_SERVICE}"
     log_info "Application images pulled successfully."
 }
 
@@ -252,7 +289,7 @@ run_database_migration() {
     log_info "Step 3/5: Executing database schema migration via ephemeral container (${DB_MIGRATE_CMD})..."
     log_warn "Notice: Prisma db:push does not support automatic down-migrations. Breaking schema changes cannot be automatically rolled back."
 
-    if docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" run --rm "${API_SERVICE}" ${DB_MIGRATE_CMD}; then
+    if "${DOCKER_CMD[@]}" compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" run --rm "${API_SERVICE}" ${DB_MIGRATE_CMD}; then
         MIGRATION_EXECUTED=1
         log_info "Database migration completed successfully."
     else
@@ -267,7 +304,7 @@ run_database_migration() {
 recreate_services() {
     log_info "Step 4/5: Recreating application services (--no-deps)..."
     # Recreate ONLY api, ops-admin, and tenant-admin without restarting postgres, redis, or gateway
-    docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --no-deps "${API_SERVICE}" "${OPS_SERVICE}" "${TENANT_SERVICE}"
+    "${DOCKER_CMD[@]}" compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --no-deps "${API_SERVICE}" "${OPS_SERVICE}" "${TENANT_SERVICE}"
     CONTAINERS_RECREATED=1
     log_info "Service recreation command issued."
 }
@@ -290,7 +327,7 @@ verify_health() {
         # Early crash detection: fail fast if any container entered exited, dead, or restarting state
         for container_name in "${API_CONTAINER}" "${OPS_CONTAINER}" "${TENANT_CONTAINER}"; do
             local container_status
-            container_status="$(docker inspect --format='{{.State.Status}}' "${container_name}" 2>/dev/null || echo "not_found")"
+            container_status="$("${DOCKER_CMD[@]}" inspect --format='{{.State.Status}}' "${container_name}" 2>/dev/null || echo "not_found")"
             if [[ "${container_status}" == "exited" || "${container_status}" == "dead" || "${container_status}" == "restarting" ]]; then
                 log_error "Container '${container_name}' entered unrecoverable state (Status: ${container_status})!"
                 return 1
@@ -298,23 +335,23 @@ verify_health() {
         done
 
         # 1. API Health Check
-        if docker exec "${API_CONTAINER}" wget -qO- http://localhost:4000/health 2>/dev/null | grep -q '"status":"healthy"'; then
+        if "${DOCKER_CMD[@]}" exec "${API_CONTAINER}" wget -qO- http://localhost:4000/health 2>/dev/null | grep -q '"status":"healthy"'; then
             api_healthy=1
         else
             api_healthy=0
         fi
 
         # 2. Ops Admin Health Check
-        if docker exec "${OPS_CONTAINER}" wget -qO- http://127.0.0.1/health 2>/dev/null | grep -q 'OK\|healthy\|200' || \
-           docker exec "${OPS_CONTAINER}" wget -q --spider http://127.0.0.1/health 2>/dev/null; then
+        if "${DOCKER_CMD[@]}" exec "${OPS_CONTAINER}" wget -qO- http://127.0.0.1/health 2>/dev/null | grep -q 'OK\|healthy\|200' || \
+           "${DOCKER_CMD[@]}" exec "${OPS_CONTAINER}" wget -q --spider http://127.0.0.1/health 2>/dev/null; then
             ops_healthy=1
         else
             ops_healthy=0
         fi
 
         # 3. Tenant Admin Health Check
-        if docker exec "${TENANT_CONTAINER}" wget -qO- http://127.0.0.1/health 2>/dev/null | grep -q 'OK\|healthy\|200' || \
-           docker exec "${TENANT_CONTAINER}" wget -q --spider http://127.0.0.1/health 2>/dev/null; then
+        if "${DOCKER_CMD[@]}" exec "${TENANT_CONTAINER}" wget -qO- http://127.0.0.1/health 2>/dev/null | grep -q 'OK\|healthy\|200' || \
+           "${DOCKER_CMD[@]}" exec "${TENANT_CONTAINER}" wget -q --spider http://127.0.0.1/health 2>/dev/null; then
             tenant_healthy=1
         else
             tenant_healthy=0
@@ -360,7 +397,7 @@ main() {
 
     # Clear traps on success and release lock
     trap - ERR
-    trap - INT TERM HUP
+    trap - INT TERM HUP EXIT
     release_lock
 
     log_info "============================================================"
