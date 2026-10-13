@@ -227,3 +227,102 @@ jobs:
           file: apps/tenant-admin/Dockerfile
           push: ${{ github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'configuration') }}
           tags: ${{ steps.tags.outputs.TENANT_TAGS }}
+
+  deploy-staging:
+    name: Deploy to Azure Staging VM
+    runs-on: ubuntu-latest
+    needs: [docker-build-verification]
+    # ACTIVATION GUARD:
+    # 1. Runs strictly on push to 'configuration' (never PRs, manual runs, main, or master).
+    # 2. Requires vars.ENABLE_STAGING_DEPLOYMENT == 'true' to be explicitly defined as a REPOSITORY-LEVEL
+    #    Actions variable (Repository Settings -> Secrets and variables -> Actions -> Variables).
+    #    NOTE: Do NOT define this as an Environment-level variable; GitHub Actions evaluates job-level
+    #    'if' conditions before selecting environments, meaning environment-scoped vars are unavailable here.
+    #    While unset or not 'true', this entire job is safely skipped without connecting to the VM.
+    if: github.event_name == 'push' && github.ref_name == 'configuration' && vars.ENABLE_STAGING_DEPLOYMENT == 'true'
+    environment: staging
+    concurrency:
+      group: staging-deployment
+      cancel-in-progress: false
+    permissions:
+      contents: read
+
+    steps:
+      - name: Configure SSH Authentication & Pinned Host Key
+        env:
+          SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.STAGING_SSH_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${SSH_KEY}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "${KNOWN_HOSTS}" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Verify VM Preconditions and Deploy Commit ${{ github.sha }}
+        env:
+          VM_HOST: ${{ secrets.STAGING_SSH_HOST }}
+          VM_USER: ${{ secrets.STAGING_SSH_USER }}
+          VM_PORT: ${{ secrets.STAGING_SSH_PORT }}
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "${VM_PORT}" -o StrictHostKeyChecking=yes "${VM_USER}@${VM_HOST}" \
+            "bash -s" -- "${TARGET_SHA}" << 'EOF'
+            set -Eeuo pipefail
+            TARGET_SHA="$1"
+            DEPLOY_DIR="/home/azureuser/whitraworks"
+
+            echo "[1/5] Checking repository directory..."
+            if [ ! -d "${DEPLOY_DIR}/.git" ]; then
+              echo "ERROR: Directory ${DEPLOY_DIR} is not a valid git repository." >&2
+              exit 1
+            fi
+            cd "${DEPLOY_DIR}"
+
+            echo "[2/5] Verifying branch and working tree state..."
+            CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+            if [ "${CURRENT_BRANCH}" != "configuration" ]; then
+              echo "ERROR: VM repository is on '${CURRENT_BRANCH}', expected 'configuration'." >&2
+              exit 1
+            fi
+
+            if [ -n "$(git status --porcelain)" ]; then
+              echo "ERROR: VM working tree is dirty. Aborting to protect local modifications." >&2
+              git status --short >&2
+              exit 1
+            fi
+
+            echo "[3/5] Fetching and fast-forwarding to target commit ${TARGET_SHA}..."
+            git fetch origin configuration
+            git merge --ff-only "${TARGET_SHA}"
+
+            DEPLOYED_SHA="$(git rev-parse HEAD)"
+            if [ "${DEPLOYED_SHA}" != "${TARGET_SHA}" ]; then
+              echo "ERROR: Deployed SHA (${DEPLOYED_SHA}) does not match expected workflow run SHA (${TARGET_SHA})." >&2
+              exit 1
+            fi
+
+            echo "[4/5] Verifying required deployment files..."
+            for req in "docker-compose.stage.yml" ".env.stage" "scripts/deploy-staging.sh"; do
+              if [ ! -f "${req}" ]; then
+                echo "ERROR: Required deployment file '${req}' not found in ${DEPLOY_DIR}." >&2
+                exit 1
+              fi
+            done
+
+            echo "[5/5] Executing staging deployment script..."
+            bash scripts/deploy-staging.sh
+          EOF
+
+      - name: Verify Public Gateway HTTPS Health Probes
+        run: |
+          echo "Probing API HTTPS health..."
+          curl -fsS --retry 6 --retry-delay 5 --max-time 10 https://api.stage.whitraworks.online/health
+
+          echo "Probing Operations Dashboard HTTPS health..."
+          curl -fsS --retry 6 --retry-delay 5 --max-time 10 https://ops.stage.whitraworks.online/health
+
+          echo "Probing Tenant Workspace HTTPS health..."
+          curl -fsS --retry 6 --retry-delay 5 --max-time 10 https://stage.whitraworks.online/health
+
