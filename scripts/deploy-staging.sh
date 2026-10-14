@@ -35,7 +35,7 @@ MAX_HEALTH_ATTEMPTS="${MAX_HEALTH_ATTEMPTS:-12}"
 HEALTH_INTERVAL_SECONDS="${HEALTH_INTERVAL_SECONDS:-5}"
 
 RUN_MIGRATIONS="${RUN_MIGRATIONS:-1}"
-DB_MIGRATE_CMD="${DB_MIGRATE_CMD:-pnpm db:push}"
+DB_MIGRATE_CMD="${DB_MIGRATE_CMD:-prisma db push --schema=packages/database/prisma/schema.prisma --skip-generate}"
 
 ENABLE_ROLLBACK="${ENABLE_ROLLBACK:-1}"
 
@@ -289,7 +289,8 @@ run_database_migration() {
     log_info "Step 3/5: Executing database schema migration via ephemeral container (${DB_MIGRATE_CMD})..."
     log_warn "Notice: Prisma db:push does not support automatic down-migrations. Breaking schema changes cannot be automatically rolled back."
 
-    if "${DOCKER_CMD[@]}" compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" run --rm "${API_SERVICE}" ${DB_MIGRATE_CMD}; then
+    read -r -a migrate_cmd_array <<< "${DB_MIGRATE_CMD}"
+    if "${DOCKER_CMD[@]}" compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" run --rm "${API_SERVICE}" "${migrate_cmd_array[@]}"; then
         MIGRATION_EXECUTED=1
         log_info "Database migration completed successfully."
     else
