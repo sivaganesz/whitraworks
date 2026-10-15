@@ -42,7 +42,7 @@ export class UpdateWorkspaceProfileDto {
 
   @ApiPropertyOptional({
     description: 'Logo image URL for the workspace',
-    example: 'https://assets.whitraworks.com/logos/freshbite.png',
+    example: 'https://assets.whitraworks.online/logos/freshbite.png',
   })
   @IsOptional()
   @IsString()

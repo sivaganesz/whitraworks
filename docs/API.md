@@ -9,9 +9,9 @@
 ## 1. Global API Standards & Conventions
 
 ### 1.1 Host Routing & Base URLs
-* **Control Plane API**: `api.whitraworks.com/ops/*` (or `api.localhost:4000/ops/*`)
-* **Tenant Data Plane API**: `api.whitraworks.com/*` (or `api.localhost:4000/*` with `Host: <slug>.whitraworks.com`)
-* **Public / Registration API**: `api.whitraworks.com/public/*`
+* **Control Plane API**: `api.whitraworks.online/ops/*` (or `api.localhost:4000/ops/*`)
+* **Tenant Data Plane API**: `api.whitraworks.online/*` (or `api.localhost:4000/*` with `Host: <slug>.whitraworks.online`)
+* **Public / Registration API**: `api.whitraworks.online/public/*`
 
 ### 1.2 Standard Response Envelope
 All API endpoints return a predictable JSON envelope:
@@ -99,12 +99,12 @@ All API endpoints return a predictable JSON envelope:
       "id": "tnt_01j9b22222",
       "name": "FreshBite Restaurant",
       "slug": "freshbite",
-      "workspaceUrl": "https://freshbite.whitraworks.com"
+      "workspaceUrl": "https://freshbite.whitraworks.online"
     }
   }
 }
 ```
-*Sets host-scoped cookie for `freshbite.whitraworks.com`.*
+*Sets host-scoped cookie for `freshbite.whitraworks.online`.*
 
 #### Collision Error Response (`HTTP 409 Conflict`):
 *Triggered when email already exists in system (Scenario A Rule).*
@@ -113,10 +113,10 @@ All API endpoints return a predictable JSON envelope:
   "success": false,
   "error": {
     "code": "EMAIL_ALREADY_ASSOCIATED_WITH_WORKSPACE",
-    "message": "This email address is already associated with a workspace: freshbite.whitraworks.com. Please sign in to your account to continue.",
+    "message": "This email address is already associated with a workspace: freshbite.whitraworks.online. Please sign in to your account to continue.",
     "details": {
       "existingWorkspaceSlug": "freshbite",
-      "signInUrl": "https://freshbite.whitraworks.com/login"
+      "signInUrl": "https://freshbite.whitraworks.online/login"
     }
   }
 }
@@ -128,7 +128,7 @@ All API endpoints return a predictable JSON envelope:
 
 ### 3.1 Tenant User Login
 * **`POST /auth/login`**
-* **Host**: `<slug>.whitraworks.com`
+* **Host**: `<slug>.whitraworks.online`
 * **Request Body**:
   ```json
   {
@@ -189,7 +189,7 @@ All API endpoints return a predictable JSON envelope:
   {
     "success": true,
     "data": {
-      "redirectUrl": "https://urbanwear.whitraworks.com"
+      "redirectUrl": "https://urbanwear.whitraworks.online"
     }
   }
   ```
@@ -245,7 +245,7 @@ All API endpoints return a predictable JSON envelope:
 
 ### 5.1 Root Superadmin Login
 * **`POST /ops/auth/login`**
-* **Host**: `ops.whitraworks.com`
+* **Host**: `ops.whitraworks.online`
 * Strictly validates `isPlatformSuperadmin == true`. Issues `__whitraworks_ops_session`.
 
 ### 5.2 Tenant Directory & Management

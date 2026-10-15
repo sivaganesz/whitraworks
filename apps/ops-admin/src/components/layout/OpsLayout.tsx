@@ -8,13 +8,18 @@ import {
   Sliders,
 } from 'lucide-react';
 import { ThemeToggle } from '@whitraworks/ui';
+import { useAuth } from '../../context/AuthContext';
 
 export function OpsLayout() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
-  const handleLogout = () => {
-    // Session logout handled in Task 4.2
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      navigate('/login');
+    }
   };
 
   const navItems = [
@@ -78,7 +83,7 @@ export function OpsLayout() {
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-zinc-600 dark:text-zinc-400 font-mono text-[11px]">
-                ops.whitraworks.com
+                {typeof window !== 'undefined' && window.location.hostname ? window.location.hostname : 'ops.whitraworks.online'}
               </span>
             </div>
             <Sliders className="w-3.5 h-3.5 text-zinc-400" />

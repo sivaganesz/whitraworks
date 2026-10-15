@@ -43,14 +43,14 @@ Phase 1 deliberately **excludes** business-vertical features (no restaurant menu
 * **Workspace Membership**: The association between a User and a Workspace is managed through a membership record (`WorkspaceMember`) containing the user's role and status within that specific business.
 
 ### 3.2 Public Registration Invariant
-* Public registration (`whitraworks.com/register`) accepts:
+* Public registration (`whitraworks.online/register`) accepts:
   * User Details: Full Name, Email Address, Password.
-  * Workspace Details: Business Name, Desired Subdomain Slug (`<slug>.whitraworks.com`).
+  * Workspace Details: Business Name, Desired Subdomain Slug (`<slug>.whitraworks.online`).
 * **Collision Rule (Email)**:
   * If the submitted email address **already exists** in the platform:
     * Workspace creation is **aborted**.
     * The platform displays a friendly, clear message directing the user to their existing workspace:
-      > *"This email address is already associated with a workspace: `abchotel.whitraworks.com`. Please sign in to your account to continue."*
+      > *"This email address is already associated with a workspace: `abchotel.whitraworks.online`. Please sign in to your account to continue."*
 * **Collision Rule (Subdomain Slug)**:
   * Slug must be unique and alphanumeric (lowercase letters, digits, hyphens).
   * System prohibits **Reserved Slugs**: `ops`, `admin`, `api`, `app`, `www`, `billing`, `support`, `auth`, `mail`, `status`, `portal`.
@@ -80,7 +80,7 @@ Phase 1 deliberately **excludes** business-vertical features (no restaurant menu
 * **FR-AUTH-06**: Workspace switching for multi-workspace users (`/auth/switch-workspace`), issuing an updated tenant-scoped session.
 
 ### 4.2 Module: Root Parent Admin (Control Plane — `ops-admin`)
-* **FR-OPS-01**: Dedicated Superadmin authentication gate at `ops.whitraworks.com`. Strict check ensuring `isPlatformSuperadmin == true`.
+* **FR-OPS-01**: Dedicated Superadmin authentication gate at `ops.whitraworks.online`. Strict check ensuring `isPlatformSuperadmin == true`.
 * **FR-OPS-02**: Tenant Directory: View paginated list of all tenants across WhitraWorks with filters (Status: Active, Suspended, Provisioning).
 * **FR-OPS-03**: Tenant Provisioning: Ability for Root Superadmins to manually provision a new business tenant and assign an initial owner.
 * **FR-OPS-04**: Tenant Lifecycle Control: Ability to activate, suspend, or reactivate any tenant. Suspended tenants immediately block all incoming API and UI requests.
@@ -89,7 +89,7 @@ Phase 1 deliberately **excludes** business-vertical features (no restaurant menu
 * **FR-OPS-07**: Superadmin Tenant Impersonation: Secure, audit-logged ability for support staff to view a tenant workspace in read-only mode for debugging.
 
 ### 4.3 Module: Tenant Workspace Admin (Data Plane — `tenant-admin`)
-* **FR-TENANT-01**: Tenant authentication on `<slug>.whitraworks.com`. Validates that the user is an active member of this resolved tenant.
+* **FR-TENANT-01**: Tenant authentication on `<slug>.whitraworks.online`. Validates that the user is an active member of this resolved tenant.
 * **FR-TENANT-02**: Workspace Profile Management: Update business display name, currency, timezone, contact email, and operational address.
 * **FR-TENANT-03**: Member Directory: View all active and invited members of the workspace with their assigned roles.
 * **FR-TENANT-04**: Member Invitation Flow:
@@ -113,7 +113,7 @@ Phase 1 deliberately **excludes** business-vertical features (no restaurant menu
 ## 5. Non-Functional Requirements (NFR)
 
 * **NFR-SEC-01 (Strict Tenant Isolation)**: Under no circumstances may a database query executed in a tenant context return data belonging to another tenant.
-* **NFR-SEC-02 (Host-Scoped Cookies)**: Session cookies must be scoped to the exact host domain (e.g. `abchotel.whitraworks.com`), never wildcarded to `.whitraworks.com`, preventing session hijacking between tenants.
+* **NFR-SEC-02 (Host-Scoped Cookies)**: Session cookies must be scoped to the exact host domain (e.g. `abchotel.whitraworks.online`), never wildcarded to `.whitraworks.online`, preventing session hijacking between tenants.
 * **NFR-SEC-03 (Privilege Escalation Defense)**: Tenant-level roles cannot satisfy or elevate to `PLATFORM_ADMIN` scopes.
 * **NFR-PERF-01 (Tenant Resolution Latency)**: Tenant resolution from the incoming `Host` header must execute in $< 5\text{ ms}$ (cached in memory).
 * **NFR-PERF-02 (API Response Time)**: Standard CRUD operations must respond with P95 latency $< 100\text{ ms}$.

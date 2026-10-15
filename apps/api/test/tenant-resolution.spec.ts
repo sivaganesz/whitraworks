@@ -116,4 +116,92 @@ describe('TenantResolutionMiddleware (Integration)', () => {
     expect(res.body.success).toBe(false);
     expect(res.body.error.code).toBe(API_ERROR_CODES.TENANT_SUSPENDED);
   });
+
+  it('5. Production Domain: resolves active tenant via whitraworks.online', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/test-context')
+      .set('Host', `${activeSlug}.whitraworks.online`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.tenant.slug).toBe(activeSlug);
+  });
+
+  it('6. Staging Subdomain: resolves active tenant via *.stage.whitraworks.online', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/test-context')
+      .set('Host', `${activeSlug}.stage.whitraworks.online`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.tenant.slug).toBe(activeSlug);
+  });
+
+  it('7. Staging Control Plane: resolves ops.stage.whitraworks.online with isControlPlane = true', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/test-context')
+      .set('Host', 'ops.stage.whitraworks.online');
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.isControlPlane).toBe(true);
+    expect(res.body.data.tenant).toBeNull();
+  });
+
+  it('8. Staging Apex: treats stage.whitraworks.online without tenant as non-tenant apex', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/test-context')
+      .set('Host', 'stage.whitraworks.online');
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.isControlPlane).toBe(false);
+    expect(res.body.data.tenant).toBeNull();
+  });
+
+  it('9. Production Apex: treats whitraworks.online without tenant as non-tenant apex', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/test-context')
+      .set('Host', 'whitraworks.online');
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.isControlPlane).toBe(false);
+    expect(res.body.data.tenant).toBeNull();
+  });
+
+  it('10. API Infrastructure: treats api subdomains as non-tenant routes', async () => {
+    const stageApiRes = await request(app.getHttpServer())
+      .get('/test-context')
+      .set('Host', 'api.stage.whitraworks.online');
+
+    expect(stageApiRes.status).toBe(200);
+    expect(stageApiRes.body.data.tenant).toBeNull();
+    expect(stageApiRes.body.data.isControlPlane).toBe(false);
+
+    const prodApiRes = await request(app.getHttpServer())
+      .get('/test-context')
+      .set('Host', 'api.whitraworks.online');
+
+    expect(prodApiRes.status).toBe(200);
+    expect(prodApiRes.body.data.tenant).toBeNull();
+    expect(prodApiRes.body.data.isControlPlane).toBe(false);
+
+    const localApiRes = await request(app.getHttpServer())
+      .get('/test-context')
+      .set('Host', 'api.localhost:4000');
+
+    expect(localApiRes.status).toBe(200);
+    expect(localApiRes.body.data.tenant).toBeNull();
+    expect(localApiRes.body.data.isControlPlane).toBe(false);
+  });
+
+  it('11. Legacy Domain: does not map whitraworks.com to tenant workspaces', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/test-context')
+      .set('Host', `${activeSlug}.whitraworks.com`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.tenant).toBeNull();
+  });
 });

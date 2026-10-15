@@ -10,6 +10,7 @@ import { PasswordService } from './password.service';
 import { SessionService } from './session.service';
 import { LoginDto } from './dto/login.dto';
 import { API_ERROR_CODES, TenantContext } from '@whitraworks/types';
+import { buildWorkspaceUrl } from '../../common/utils/url.util';
 
 @Injectable()
 export class AuthService {
@@ -249,10 +250,7 @@ export class AuthService {
       });
     }
 
-    const isProd = process.env['NODE_ENV'] === 'production';
-    const redirectUrl = isProd
-      ? `https://${tenant.slug}.whitraworks.com`
-      : `http://${tenant.slug}.localhost:3000`;
+    const redirectUrl = buildWorkspaceUrl(tenant.slug);
 
     return { redirectUrl };
   }

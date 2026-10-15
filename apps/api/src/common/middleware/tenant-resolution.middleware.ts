@@ -38,14 +38,14 @@ export class TenantResolutionMiddleware implements NestMiddleware {
     // Extract subdomain
     const slug = this.extractSubdomain(hostname, req);
 
-    // 1. Control Plane (ops.whitraworks.com or ops.localhost)
+    // 1. Control Plane (ops.whitraworks.online, ops.stage.whitraworks.online, or ops.localhost)
     if (slug === 'ops') {
       req.isControlPlane = true;
       return next();
     }
 
-    // 2. No subdomain or root api domain
-    if (!slug || slug === 'api' || slug === 'www' || slug === 'localhost') {
+    // 2. No subdomain, root api domain, or staging apex
+    if (!slug || slug === 'api' || slug === 'www' || slug === 'localhost' || slug === 'stage') {
       if (isExemptPath) {
         return next();
       }
@@ -53,7 +53,7 @@ export class TenantResolutionMiddleware implements NestMiddleware {
       return next();
     }
 
-    // 3. Resolve Tenant Data Plane (<slug>.localhost or <slug>.whitraworks.com)
+    // 3. Resolve Tenant Data Plane (<slug>.whitraworks.online, <slug>.stage.whitraworks.online, or <slug>.localhost)
     try {
       // Check high-performance distributed Redis cache first
       let tenant: CachedTenant | null = await this.redis.getCachedTenant(slug);
@@ -135,12 +135,29 @@ export class TenantResolutionMiddleware implements NestMiddleware {
       }
     }
 
-    // Production: <slug>.whitraworks.com
-    const rootDomain = process.env['ROOT_DOMAIN'] || 'whitraworks.com';
-    if (hostname.endsWith(`.${rootDomain}`)) {
-      const subparts = hostname.replace(`.${rootDomain}`, '').split('.');
-      if (subparts.length >= 1 && subparts[0]) {
-        return subparts[0];
+    // Production & Staging: <slug>.<domain> (supports configured domain, stage.whitraworks.online, and whitraworks.online)
+    const configuredDomain = process.env['ROOT_DOMAIN'] || process.env['PLATFORM_DOMAIN'];
+    const candidates = new Set<string>();
+    if (configuredDomain) {
+      candidates.add(configuredDomain.toLowerCase().trim());
+    }
+    candidates.add('stage.whitraworks.online');
+    candidates.add('whitraworks.online');
+
+    // Sort descending by length so more specific domains (e.g. stage.whitraworks.online) match before base domains
+    const sortedDomains = Array.from(candidates).sort((a, b) => b.length - a.length);
+
+    for (const domain of sortedDomains) {
+      // Direct apex match check (e.g. stage.whitraworks.online or whitraworks.online without tenant subdomain)
+      if (hostname === domain) {
+        return null;
+      }
+      if (hostname.endsWith(`.${domain}`)) {
+        const prefix = hostname.slice(0, -(domain.length + 1));
+        const subparts = prefix.split('.');
+        if (subparts.length >= 1 && subparts[0]) {
+          return subparts[0];
+        }
       }
     }
 

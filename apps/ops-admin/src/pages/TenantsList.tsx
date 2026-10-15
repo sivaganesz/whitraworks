@@ -12,6 +12,7 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 import { opsApi, type TenantListItem } from '../lib/api';
+import { getTenantWorkspaceHost, getTenantWorkspaceUrl } from '../lib/urls';
 import { TenantStatusModal } from '../components/TenantStatusModal';
 import { CapabilityManagerDrawer } from '../components/CapabilityManagerDrawer';
 
@@ -209,10 +210,10 @@ export function TenantsListPage() {
                         </div>
                         <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                           <code className="font-mono text-zinc-600 dark:text-zinc-400">
-                            {tenant.slug}.whitraworks.com
+                            {getTenantWorkspaceHost(tenant.slug)}
                           </code>
                           <a
-                            href={`http://${tenant.slug}.localhost:3000`}
+                            href={getTenantWorkspaceUrl(tenant.slug)}
                             target="_blank"
                             rel="noreferrer"
                             className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"

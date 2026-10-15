@@ -26,6 +26,7 @@ import {
 import { workspaceApi, WorkspaceProfile, ApiError } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useTenant } from '../context/TenantContext';
+import { getTenantWorkspaceHost } from '../lib/subdomain';
 
 const SUPPORTED_CURRENCIES = [
   { code: 'USD', label: 'USD - United States Dollar ($)' },
@@ -239,7 +240,7 @@ export function SettingsPage() {
                   <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                   <Input
                     type="text"
-                    value={`${profile?.slug || slug || ''}.whitraworks.com`}
+                    value={getTenantWorkspaceHost(profile?.slug || slug || '')}
                     disabled
                     className="pl-9 bg-zinc-100 dark:bg-zinc-800/60 font-mono text-zinc-500 cursor-not-allowed"
                   />

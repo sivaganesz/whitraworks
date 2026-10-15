@@ -82,7 +82,7 @@ The Data Plane features a **Workspace-Centric Top Header** with the multi-worksp
 1. **Workspace Switcher Dropdown**:
    * Displays the current active workspace.
    * Lists all other workspaces the user has been invited to.
-   * Clicking a workspace navigates to `<other-slug>.whitraworks.com`.
+   * Clicking a workspace navigates to `<other-slug>.whitraworks.online`.
 2. **Member Invitation Modal**:
    * Email input + Role selector (Owner, Admin, Staff, Custom).
    * Automatically displays warning if the user cannot be invited.

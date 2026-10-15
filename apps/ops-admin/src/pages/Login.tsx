@@ -57,7 +57,7 @@ export function LoginPage() {
             WhitraWorks Ops Control Plane
           </h1>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Root Superadmin Authentication • ops.whitraworks.com
+            Root Superadmin Authentication • {typeof window !== 'undefined' && window.location.hostname ? window.location.hostname : 'ops.whitraworks.online'}
           </p>
         </div>
 
@@ -81,7 +81,7 @@ export function LoginPage() {
               <Input
                 label="Superadmin Email"
                 type="email"
-                placeholder="superadmin@whitraworks.com"
+                placeholder="superadmin@whitraworks.online"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

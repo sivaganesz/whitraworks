@@ -1,6 +1,6 @@
 /**
  * Subdomain resolution utility for WhitraWorks Tenant Admin Data Plane.
- * Golden Rule 5 & 10: Isolates data plane to the issuing host (<slug>.whitraworks.com or <slug>.localhost).
+ * Golden Rule 5 & 10: Isolates data plane to the issuing host (<slug>.whitraworks.online or <slug>.localhost).
  */
 
 const RESERVED_SUBDOMAINS = new Set([
@@ -9,6 +9,7 @@ const RESERVED_SUBDOMAINS = new Set([
   'admin',
   'app',
   'www',
+  'stage',
   'static',
   'assets',
   'mail',
@@ -39,7 +40,7 @@ export function setDevWorkspaceSlug(slug: string): void {
 export function resolveTenantSubdomain(hostname: string = window.location.hostname): SubdomainResolution {
   const parts = hostname.toLowerCase().split('.');
 
-  // Scenario 1: <slug>.whitraworks.com (3 or more parts: e.g. ["acme", "whitraworks", "com"])
+  // Scenario 1: <slug>.whitraworks.online or <slug>.stage.whitraworks.online (3 or more parts)
   // Scenario 2: <slug>.localhost (2 parts: e.g. ["acme", "localhost"])
   let rawSubdomain: string | null = null;
   let isDevFallback = false;
@@ -60,7 +61,7 @@ export function resolveTenantSubdomain(hostname: string = window.location.hostna
       hostname,
       isReserved: false,
       isDevFallback,
-      error: 'No tenant workspace subdomain detected. Please navigate to <workspace>.whitraworks.com',
+      error: 'No tenant workspace subdomain detected. Please navigate to <workspace>.whitraworks.online',
     };
   }
 
@@ -80,4 +81,19 @@ export function resolveTenantSubdomain(hostname: string = window.location.hostna
     isReserved: false,
     isDevFallback,
   };
+}
+
+export function getTenantWorkspaceHost(slug: string): string {
+  if (typeof window === 'undefined') return `${slug}.whitraworks.online`;
+  const host = window.location.hostname;
+  if (host.endsWith('stage.whitraworks.online')) {
+    return `${slug}.stage.whitraworks.online`;
+  }
+  if (host.endsWith('whitraworks.online')) {
+    return `${slug}.whitraworks.online`;
+  }
+  if (host.endsWith('localhost') || host === '127.0.0.1') {
+    return `${slug}.localhost:3000`;
+  }
+  return `${slug}.whitraworks.online`;
 }

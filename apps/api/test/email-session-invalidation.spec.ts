@@ -144,7 +144,7 @@ describe('Tasks 5 & 6: Transactional Emails & Distributed Session Invalidation (
         workspaceName: 'Acme Test',
         workspaceSlug: 'acme-test',
         roleName: 'Staff Member',
-        inviteUrl: 'https://acme-test.whitraworks.com/invite/accept?token=sample123',
+        inviteUrl: 'https://acme-test.whitraworks.online/invite/accept?token=sample123',
         expiresAt: new Date(Date.now() + 7 * 86400000),
       });
 
@@ -158,7 +158,7 @@ describe('Tasks 5 & 6: Transactional Emails & Distributed Session Invalidation (
         userName: 'Alex',
         businessName: 'Apex Logistics',
         workspaceSlug: 'apex-logistics',
-        workspaceUrl: 'https://apex-logistics.whitraworks.com',
+        workspaceUrl: 'https://apex-logistics.whitraworks.online',
       });
 
       expect(result.success).toBe(true);
@@ -169,7 +169,7 @@ describe('Tasks 5 & 6: Transactional Emails & Distributed Session Invalidation (
       const result = await mailService.sendPasswordResetEmail({
         to: 'user@example.com',
         userName: 'Alex',
-        resetUrl: 'https://whitraworks.com/reset?token=xyz',
+        resetUrl: 'https://whitraworks.online/reset?token=xyz',
         expiresAt: new Date(Date.now() + 3600000),
       });
 
@@ -254,7 +254,7 @@ describe('Tasks 5 & 6: Transactional Emails & Distributed Session Invalidation (
       // Create superadmin user for ops control plane
       const superadmin = await prisma.base.user.create({
         data: {
-          email: `superadmin-${timestamp}@ops.whitraworks.com`,
+          email: `superadmin-${timestamp}@ops.whitraworks.online`,
           passwordHash: 'dummy',
           firstName: 'Super',
           lastName: 'Admin',

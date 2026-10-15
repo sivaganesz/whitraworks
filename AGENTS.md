@@ -36,7 +36,7 @@ These rules are non-negotiable. Any pull request or generated code that violates
 | **2** | **Mandatory Tenant Context** | Never write a query against tenant-scoped tables (`workspace_members`, `roles`, `invitations`, `capabilities`, `audit_logs`) without binding to the active `tenantId`. Rely on the Prisma extension where possible; never bypass it. |
 | **3** | **Zero Domain Contamination in Core** | Never write `if (businessType === 'restaurant')` inside core modules. Domain variations are governed strictly through the **Capability Engine** (`@RequireCapability('xyz')`). |
 | **4** | **UUID v7 for All Identifiers** | All table primary keys use UUID v7 (time-sortable 128-bit identifiers). No auto-increment integers. No MongoDB ObjectIds. |
-| **5** | **Host-Only Cookies (No Wildcards)** | Never set `domain: .whitraworks.com`. All session cookies must omit the domain attribute to lock strictly to the exact issuing host (`ops.whitraworks.com` or `<slug>.whitraworks.com`). |
+| **5** | **Host-Only Cookies (No Wildcards)** | Never set `domain: .whitraworks.online`. All session cookies must omit the domain attribute to lock strictly to the exact issuing host (`ops.whitraworks.online` or `<slug>.whitraworks.online`). |
 | **6** | **Two-Tier Privilege Orthogonality** | `isPlatformSuperadmin` and platform scopes (`platform:*`) are completely separate from tenant roles (`OWNER`, `ADMIN`, `STAFF`). A tenant Owner must never be able to satisfy a platform operator check. |
 | **7** | **Monorepo Tier Boundaries** | Frontend applications (`apps/ops-admin`, `apps/tenant-admin`) must **never** import `@whitraworks/database`, Prisma clients, or backend code. Communication is strictly over HTTP APIs using shared DTOs from `@whitraworks/types`. |
 | **8** | **Class-Validator DTOs & Swagger Annotations** | All backend inputs and responses must be modeled with typed DTO classes decorated with `class-validator` rules and `@ApiProperty()` Swagger annotations. Zero raw, unvalidated payload execution. |
@@ -60,7 +60,7 @@ These rules are non-negotiable. Any pull request or generated code that violates
   ```typescript
   throw new ConflictException({
     code: 'EMAIL_ALREADY_ASSOCIATED_WITH_WORKSPACE',
-    message: `This email address is already associated with a workspace: ${existingSlug}.whitraworks.com. Please sign in to your account to continue.`,
+    message: `This email address is already associated with a workspace: ${existingSlug}.whitraworks.online. Please sign in to your account to continue.`,
     details: { existingWorkspaceSlug: existingSlug },
   });
   ```

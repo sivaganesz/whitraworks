@@ -5,14 +5,11 @@ import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.int
  *
  * 1. Development: Localhost with arbitrary port and optional subdomain
  *    (e.g., http://localhost:3000, http://ops.localhost:3001, http://demo.localhost:3000)
- * 2. Production (whitraworks.com): HTTPS apex and subdomains
- *    (e.g., https://whitraworks.com, https://ops.whitraworks.com, https://demo.whitraworks.com)
- * 3. Staging & Production (whitraworks.online): HTTPS apex and subdomains
- *    (e.g., https://stage.whitraworks.online, https://ops.stage.whitraworks.online, https://demo.stage.whitraworks.online)
+ * 2. Staging & Production (whitraworks.online): HTTPS apex and subdomains
+ *    (e.g., https://stage.whitraworks.online, https://ops.stage.whitraworks.online, https://demo.stage.whitraworks.online, https://whitraworks.online)
  */
 export const ALLOWED_ORIGIN_PATTERNS: RegExp[] = [
   /^http:\/\/([a-z0-9-]+\.)?localhost:[0-9]+$/i,
-  /^https:\/\/([a-z0-9-]+\.)?whitraworks\.com$/i,
   /^https:\/\/([a-z0-9-]+\.)?stage\.whitraworks\.online$/i,
   /^https:\/\/([a-z0-9-]+\.)?whitraworks\.online$/i,
 ];

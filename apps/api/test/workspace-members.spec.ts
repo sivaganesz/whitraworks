@@ -198,6 +198,8 @@ describe('Workspace Memberships, RBAC & Capabilities (e2e)', () => {
       expect(found).toBeDefined();
       expect(found.role.code).toBe('STAFF');
       expect(found.isExpired).toBe(false);
+      expect(found.inviteUrl).toContain(found.token);
+      expect(found.inviteUrl).toContain('/invite/accept?token=');
     });
 
     it('supports revoking an unaccepted invitation', async () => {

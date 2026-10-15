@@ -24,8 +24,8 @@ Welcome to the central documentation repository for **WhitraWorks**, a multi-ten
 ## 🚀 Quick Summary of Key Decisions
 
 1. **Two-Tier Administration Structure**:
-   * **Root Parent Admin (`ops-admin`)**: Hosted on `ops.whitraworks.com`. Platform operators manage all tenants, toggle business capabilities, and monitor cross-tenant health.
-   * **Tenant Workspace Admin (`tenant-admin`)**: Hosted on `<slug>.whitraworks.com`. Business clients manage their staff, settings, and business operations.
+   * **Root Parent Admin (`ops-admin`)**: Hosted on `ops.whitraworks.online`. Platform operators manage all tenants, toggle business capabilities, and monitor cross-tenant health.
+   * **Tenant Workspace Admin (`tenant-admin`)**: Hosted on `<slug>.whitraworks.online`. Business clients manage their staff, settings, and business operations.
 2. **Identity & Workspace Invariants (Scenario A)**:
    * **1 User = 1 Global Account** (unique email).
    * **Public Registration**: Creates 1 User + 1 Workspace. If email exists, creation is blocked and directs user to their existing workspace.

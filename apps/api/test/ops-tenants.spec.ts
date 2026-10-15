@@ -58,7 +58,7 @@ describe('Ops Tenants Directory & Status Lifecycle (e2e)', () => {
     const superadminUser = await prisma.base.user.create({
       data: {
         id: superadminId,
-        email: `superadmin-${Date.now()}@ops.whitraworks.com`,
+        email: `superadmin-${Date.now()}@ops.whitraworks.online`,
         passwordHash: 'dummy-hash',
         firstName: 'Root',
         lastName: 'Admin',

@@ -11,6 +11,7 @@ import { RegisterDto } from './dto/register.dto';
 import { API_ERROR_CODES, RESERVED_SLUGS, CAPABILITY_REGISTRY } from '@whitraworks/types';
 import { RedisService } from '../redis/redis.service';
 import { MailService } from '../mail/mail.service';
+import { buildWorkspaceUrl } from '../../common/utils/url.util';
 
 @Injectable()
 export class RegistrationService {
@@ -57,8 +58,6 @@ export class RegistrationService {
   async register(dto: RegisterDto) {
     const email = dto.email.toLowerCase().trim();
     const slug = dto.slug.toLowerCase().trim();
-    const isProd = process.env['NODE_ENV'] === 'production';
-
     // ─────────────────────────────────────────────────────────────
     // 1. SCENARIO A COLLISION GUARDRAIL: ONE USER = ONE WORKSPACE
     // ─────────────────────────────────────────────────────────────
@@ -76,13 +75,11 @@ export class RegistrationService {
     if (existingUser) {
       const existingMembership = existingUser.memberships[0];
       const existingSlug = existingMembership?.tenant.slug || 'app';
-      const signInUrl = isProd
-        ? `https://${existingSlug}.whitraworks.com/login`
-        : `http://${existingSlug}.localhost:3000/login`;
+      const signInUrl = buildWorkspaceUrl(existingSlug, '/login');
 
       throw new ConflictException({
         code: API_ERROR_CODES.EMAIL_ALREADY_ASSOCIATED_WITH_WORKSPACE,
-        message: `This email address is already associated with a workspace: ${existingSlug}.whitraworks.com. Please sign in to your account to continue.`,
+        message: `This email address is already associated with a workspace: ${existingSlug}.whitraworks.online. Please sign in to your account to continue.`,
         details: {
           existingWorkspaceSlug: existingSlug,
           signInUrl,
@@ -190,9 +187,7 @@ export class RegistrationService {
       return { user, tenant };
     });
 
-    const workspaceUrl = isProd
-      ? `https://${result.tenant.slug}.whitraworks.com`
-      : `http://${result.tenant.slug}.localhost:3000`;
+    const workspaceUrl = buildWorkspaceUrl(result.tenant.slug);
 
     // 3.6 Mint Host-Scoped Session Token for the newly created tenant
     const token = this.sessionService.createSessionToken({

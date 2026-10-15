@@ -99,7 +99,7 @@ jobs:
       NODE_ENV: test
       JWT_SECRET: test-jwt-secret-min-32-chars-long-whitraworks
       COOKIE_SECRET: test-cookie-secret-min-32-chars-whitraworks
-      PLATFORM_DOMAIN: whitraworks.com
+      PLATFORM_DOMAIN: whitraworks.online
 
     steps:
       - name: Checkout code
@@ -149,7 +149,7 @@ jobs:
       - name: Seed Test Database
         env:
           DATABASE_URL: postgresql://postgres:postgrespassword@localhost:5432/whitraworks_test?schema=public
-          INITIAL_SUPERADMIN_EMAIL: superadmin@whitraworks.com
+          INITIAL_SUPERADMIN_EMAIL: superadmin@whitraworks.online
           INITIAL_SUPERADMIN_PASSWORD: ChangeMeImmediately123!
         run: pnpm db:seed
 
@@ -161,7 +161,7 @@ jobs:
           NODE_ENV: test
           JWT_SECRET: test-jwt-secret-min-32-chars-long-whitraworks
           COOKIE_SECRET: test-cookie-secret-min-32-chars-whitraworks
-          PLATFORM_DOMAIN: whitraworks.com
+          PLATFORM_DOMAIN: whitraworks.online
         run: pnpm test
 
   docker-build-verification:

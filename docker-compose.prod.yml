@@ -50,9 +50,11 @@ services:
       REDIS_PORT: 6379
       COOKIE_SECRET: ${COOKIE_SECRET:-whitraworks-super-secure-production-cookie-secret-key-32chars}
       JWT_SECRET: ${JWT_SECRET:-whitraworks-super-secure-production-jwt-secret-key-32chars}
-      PLATFORM_DOMAIN: ${PLATFORM_DOMAIN:-whitraworks.com}
+      PLATFORM_DOMAIN: ${PLATFORM_DOMAIN:-whitraworks.online}
+      ROOT_DOMAIN: ${ROOT_DOMAIN:-whitraworks.online}
+      TENANT_ADMIN_BASE_DOMAIN: ${TENANT_ADMIN_BASE_DOMAIN:-whitraworks.online}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
-      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-notifications@whitraworks.com}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-notifications@whitraworks.online}
     depends_on:
       postgres:
         condition: service_healthy

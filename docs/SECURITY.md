@@ -59,10 +59,10 @@ flowchart TD
 ## 3. Cookie Architecture & Session Protection
 
 ### 3.1 Host-Only Scoping (No Wildcard Cookies)
-* **The Vulnerability**: Using a wildcard domain cookie (`domain: .whitraworks.com`) allows JavaScript or malicious redirects on `tenant-a.whitraworks.com` to send or manipulate cookies intended for `tenant-b.whitraworks.com` or `ops.whitraworks.com`.
+* **The Vulnerability**: Using a wildcard domain cookie (`domain: .whitraworks.online`) allows JavaScript or malicious redirects on `tenant-a.whitraworks.online` to send or manipulate cookies intended for `tenant-b.whitraworks.online` or `ops.whitraworks.online`.
 * **The WhitraWorks Defense**: All session cookies omit the `Domain` attribute in the `Set-Cookie` header.
   * In RFC 6265, omitting `Domain` locks the cookie strictly to the **exact host** (Host-Only Cookie).
-  * A cookie minted on `abchotel.whitraworks.com` will **never** be sent by the browser to `ops.whitraworks.com` or `greenmart.whitraworks.com`.
+  * A cookie minted on `abchotel.whitraworks.online` will **never** be sent by the browser to `ops.whitraworks.online` or `greenmart.whitraworks.online`.
 
 ### 3.2 Cookie Flags
 | Attribute | Value | Rationale |
@@ -82,12 +82,12 @@ flowchart TD
 * `/ops/*` endpoints are protected by `PlatformSuperadminGuard`, which checks:
   1. Valid session.
   2. `isPlatformSuperadmin === true`.
-  3. `Host === 'ops.whitraworks.com'` (or `ops.localhost:3001`).
+  3. `Host === 'ops.whitraworks.online'` (or `ops.localhost:3001`).
 * Tenant users—even those with the `OWNER` role inside a workspace—cannot access `/ops/*` routes.
 
 ### 4.2 Workspace Permission Isolation
 * When a user belongs to multiple workspaces (e.g. `OWNER` at ABC Hotel, `STAFF` at GreenMart), permissions are evaluated strictly against their `WorkspaceMember` record for the **active tenant** resolved from the `Host` header.
-* A user's `OWNER` permissions at ABC Hotel provide zero elevated rights when they send requests to `greenmart.whitraworks.com`.
+* A user's `OWNER` permissions at ABC Hotel provide zero elevated rights when they send requests to `greenmart.whitraworks.online`.
 
 ---
 

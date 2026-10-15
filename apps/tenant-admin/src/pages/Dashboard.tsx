@@ -6,6 +6,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { useTenant } from '../context/TenantContext';
+import { getTenantWorkspaceHost } from '../lib/subdomain';
 
 export function DashboardPage() {
   const { slug, resolution } = useTenant();
@@ -107,7 +108,7 @@ export function DashboardPage() {
                   Host-Only Cookies (Rule 5)
                 </p>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Sessions locked to <span className="font-mono">{slug}.whitraworks.com</span>
+                  Sessions locked to <span className="font-mono">{getTenantWorkspaceHost(slug || 'workspace')}</span>
                 </p>
               </div>
               <Badge variant="active">Enforced</Badge>

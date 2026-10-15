@@ -118,7 +118,7 @@
 
 - [x] **Task 4.1: React + Vite Scaffold for Ops Admin**
   * **Files**: `apps/ops-admin/src/App.tsx`, `apps/ops-admin/vite.config.ts`, `apps/ops-admin/tailwind.config.js`, `apps/ops-admin/src/components/layout/OpsLayout.tsx`
-  * **Description**: Scaffold React 19 app configured for `ops.whitraworks.com` (or `ops.localhost:3001` in dev).
+  * **Description**: Scaffold React 19 app configured for `ops.whitraworks.online` (or `ops.localhost:3001` in dev).
   * **Acceptance**: Dev server starts and renders dark- and light-themed platform layout shell with ThemeProvider.
 
 - [x] **Task 4.2: Superadmin Authentication & Protected Routes**
@@ -147,7 +147,7 @@
 
 - [x] **Task 5.1: React + Vite Scaffold for Tenant Admin**
   * **Files**: `apps/tenant-admin/src/App.tsx`, `apps/tenant-admin/vite.config.ts`, `apps/tenant-admin/tailwind.config.js`, `apps/tenant-admin/src/components/layout/TenantLayout.tsx`, `apps/tenant-admin/src/lib/subdomain.ts`, `apps/tenant-admin/src/context/TenantContext.tsx`
-  * **Description**: Scaffold React 19 app configured for `<slug>.whitraworks.com` (or `<slug>.localhost:3000` in dev).
+  * **Description**: Scaffold React 19 app configured for `<slug>.whitraworks.online` (or `<slug>.localhost:3000` in dev).
   * **Acceptance**: App renders workspace layout shell and detects current subdomain.
 
 - [x] **Task 5.2: Tenant Authentication & Workspace Switcher**

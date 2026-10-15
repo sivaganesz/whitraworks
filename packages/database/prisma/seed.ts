@@ -162,7 +162,7 @@ async function main() {
 
   // 3. Seed Initial Platform Superadmin
   console.log('  -> Seeding Root Platform Superadmin...');
-  const superadminEmail = process.env.INITIAL_SUPERADMIN_EMAIL || 'superadmin@whitraworks.com';
+  const superadminEmail = process.env.INITIAL_SUPERADMIN_EMAIL || 'superadmin@whitraworks.online';
   const superadminPassword = process.env.INITIAL_SUPERADMIN_PASSWORD || 'ChangeMeImmediately123!';
   const passwordHash = await argon2.hash(superadminPassword);
 

@@ -3,6 +3,7 @@ import { Badge } from '@whitraworks/ui';
 import { Building2, Check, ChevronsUpDown, Loader2, PlusCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTenant } from '../context/TenantContext';
+import { getTenantWorkspaceHost } from '../lib/subdomain';
 
 export function WorkspaceSwitcher() {
   const { slug } = useTenant();
@@ -105,7 +106,7 @@ export function WorkspaceSwitcher() {
                       <div className="min-w-0 flex-1 truncate">
                         <p className="truncate font-medium">{ws.name}</p>
                         <p className="text-[10px] font-mono text-zinc-400 truncate">
-                          {ws.slug}.whitraworks.com
+                          {getTenantWorkspaceHost(ws.slug)}
                         </p>
                       </div>
                     </div>

@@ -19,6 +19,7 @@ import { API_ERROR_CODES, MembershipStatus } from '@whitraworks/types';
 import { Prisma } from '@whitraworks/database';
 import { RedisService } from '../redis/redis.service';
 import { MailService } from '../mail/mail.service';
+import { buildWorkspaceUrl } from '../../common/utils/url.util';
 
 
 export interface MemberListItem {
@@ -321,10 +322,7 @@ export class MembersService {
       },
     });
 
-    const isProd = process.env['NODE_ENV'] === 'production';
-    const inviteUrl = isProd
-      ? `https://${tenant.slug}.whitraworks.com/invite/accept?token=${token}`
-      : `http://${tenant.slug}.localhost:3000/invite/accept?token=${token}`;
+    const inviteUrl = buildWorkspaceUrl(tenant.slug, `/invite/accept?token=${token}`);
 
     // Dispatch transactional invitation email via Resend
     await this.mailService.sendInvitationEmail({
@@ -395,7 +393,7 @@ export class MembersService {
             name: `${inv.invitedBy.firstName} ${inv.invitedBy.lastName}`.trim(),
           }
         : null,
-      inviteUrl: `https://${slug}.whitraworks.com/invite/accept?token=${inv.token}`,
+      inviteUrl: buildWorkspaceUrl(slug, `/invite/accept?token=${inv.token}`),
     }));
   }
 

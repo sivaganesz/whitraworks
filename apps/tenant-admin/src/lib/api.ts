@@ -317,6 +317,7 @@ export interface RegisterResult {
     slug: string;
     name: string;
     status: string;
+    workspaceUrl?: string;
   };
 }
 

@@ -14,6 +14,7 @@ import { Building, Lock, Mail, Loader2, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTenant } from '../context/TenantContext';
 import { ApiError } from '../lib/api';
+import { getTenantWorkspaceHost } from '../lib/subdomain';
 
 export function LoginPage() {
   const { login, isAuthenticated } = useAuth();
@@ -77,7 +78,7 @@ export function LoginPage() {
             <Building className="w-3.5 h-3.5" />
             <span>Workspace:</span>
             <span className="font-mono font-semibold text-zinc-800 dark:text-zinc-200">
-              {slug || 'acme-corp'}.whitraworks.com
+              {getTenantWorkspaceHost(slug || 'acme-corp')}
             </span>
           </div>
         </div>

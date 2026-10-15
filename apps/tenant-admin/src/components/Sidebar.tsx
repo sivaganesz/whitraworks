@@ -21,6 +21,7 @@ import {
 import { CAPABILITY_REGISTRY, CapabilityDefinition } from '@whitraworks/types';
 import { useTenant } from '../context/TenantContext';
 import { useCapabilities } from '../context/CapabilityContext';
+import { getTenantWorkspaceHost } from '../lib/subdomain';
 
 interface SidebarProps {
   onNavigate?: () => void;
@@ -107,7 +108,7 @@ export function Sidebar({ onNavigate, className = '' }: SidebarProps) {
         </div>
         <div className="flex items-center gap-1.5 font-mono text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
           <Globe className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-          <span className="truncate">{slug || 'unknown'}.whitraworks.com</span>
+          <span className="truncate">{getTenantWorkspaceHost(slug || 'unknown')}</span>
         </div>
 
         {resolution.isDevFallback && (

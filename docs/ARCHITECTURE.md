@@ -13,8 +13,8 @@ WhitraWorks is architected as a **modular monolith** within a high-performance *
 ```mermaid
 flowchart TD
     subgraph Clients["Frontends & External Clients"]
-        OpsUI["Root Parent Admin (ops.whitraworks.com)"]
-        TenantUI["Tenant Workspace Admin (*.whitraworks.com)"]
+        OpsUI["Root Parent Admin (ops.whitraworks.online)"]
+        TenantUI["Tenant Workspace Admin (*.whitraworks.online)"]
         HeadlessClients["Headless Mobile / Web Storefronts"]
     end
 
@@ -38,8 +38,8 @@ flowchart TD
         RedisCache[(Redis Cache & Pub/Sub)]
     end
 
-    OpsUI -->|Host: ops.whitraworks.com| HostRouter
-    TenantUI -->|Host: :slug.whitraworks.com| HostRouter
+    OpsUI -->|Host: ops.whitraworks.online| HostRouter
+    TenantUI -->|Host: :slug.whitraworks.online| HostRouter
     HeadlessClients -->|x-tenant-id or Host| HostRouter
 
     HostRouter --> TenantResolver
@@ -73,11 +73,11 @@ whitraworks/
 │   │   └── package.json
 │   │
 │   ├── ops-admin/              # React 19 + Vite (Root Parent Admin / Control Plane)
-│   │   ├── src/                # ops.whitraworks.com
+│   │   ├── src/                # ops.whitraworks.online
 │   │   └── package.json
 │   │
 │   └── tenant-admin/           # React 19 + Vite (Tenant Workspace Admin / Data Plane)
-│       ├── src/                # *.whitraworks.com
+│       ├── src/                # *.whitraworks.online
 │       └── package.json
 │
 ├── packages/
@@ -111,22 +111,22 @@ whitraworks/
   * API: `api.localhost:4000`
   * *Note: Modern web browsers automatically route any `*.localhost` domain to `127.0.0.1` without needing `/etc/hosts` modifications.*
 * **Production**:
-  * Root Ops: `ops.whitraworks.com`
-  * Tenant Workspaces: `<slug>.whitraworks.com`
-  * API: `api.whitraworks.com`
+  * Root Ops: `ops.whitraworks.online`
+  * Tenant Workspaces: `<slug>.whitraworks.online`
+  * API: `api.whitraworks.online`
 
 ### 3.2 Request Flow Diagram
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Client as Browser (abchotel.whitraworks.com)
+    participant Client as Browser (abchotel.whitraworks.online)
     participant Middleware as TenantResolutionMiddleware
     participant Cache as Redis (Tenant Cache)
     participant DB as PostgreSQL
     participant Guard as Auth & RBAC Guard
     participant Service as Business Service
 
-    Client->>Middleware: HTTP GET /workspace/profile (Host: abchotel.whitraworks.com)
+    Client->>Middleware: HTTP GET /workspace/profile (Host: abchotel.whitraworks.online)
     Middleware->>Middleware: Parse subdomain = "abchotel"
     Middleware->>Cache: GET tenant:abchotel
     alt Cache Hit
@@ -154,7 +154,7 @@ To prevent architectural blurring and cross-tenant security vulnerabilities, Whi
 ```text
 ┌────────────────────────────────────────────────────────────────────────┐
 │                   CONTROL PLANE (apps/ops-admin)                       │
-│                     Host: ops.whitraworks.com                          │
+│                     Host: ops.whitraworks.online                       │
 ├────────────────────────────────────────────────────────────────────────┤
 │  • Platform Superadmin Authentication & Session Gate                   │
 │  • Tenant Directory & Provisioning Engine                              │
@@ -168,7 +168,7 @@ To prevent architectural blurring and cross-tenant security vulnerabilities, Whi
                                     ▼
 ┌────────────────────────────────────────────────────────────────────────┐
 │                   DATA PLANE (apps/tenant-admin)                       │
-│                     Host: <slug>.whitraworks.com                       │
+│                     Host: <slug>.whitraworks.online                    │
 ├────────────────────────────────────────────────────────────────────────┤
 │  • Tenant Workspace Authentication & Host-Scoped Session               │
 │  • Workspace Profile & Operational Parameters (Timezone, Currency)     │
@@ -187,10 +187,10 @@ To prevent architectural blurring and cross-tenant security vulnerabilities, Whi
 * Uses **Argon2id** (memory-hard, resistant to GPU/ASIC brute-force attacks) with salt generation per credential.
 
 ### 5.2 Cookie Architecture (Host-Scoped, No Cross-Subdomain Leaks)
-* Reference learning from our Better Auth architecture: We **do not** use wildcard cookies (`domain: .whitraworks.com`).
+* Reference learning from our Better Auth architecture: We **do not** use wildcard cookies (`domain: .whitraworks.online`).
 * Each session cookie is locked to the specific hostname:
-  * `ops.whitraworks.com` receives an Ops Session Cookie: `__whitraworks_ops_session`.
-  * `abchotel.whitraworks.com` receives a Tenant Session Cookie: `__whitraworks_tenant_session`.
+  * `ops.whitraworks.online` receives an Ops Session Cookie: `__whitraworks_ops_session`.
+  * `abchotel.whitraworks.online` receives a Tenant Session Cookie: `__whitraworks_tenant_session`.
 * Cookie Security Attributes:
   * `HttpOnly: true` (prevents JavaScript/XSS extraction)
   * `Secure: true` (transmitted only over HTTPS)

@@ -195,7 +195,7 @@ describe('Module 6 - Task 6.2: Multi-Tenant Negative Security & Boundary Verific
     // ─────────────────────────────────────────────────────────────
     const superadmin = await prisma.base.user.create({
       data: {
-        email: `superadmin-sec-${timestamp}@ops.whitraworks.com`,
+        email: `superadmin-sec-${timestamp}@ops.whitraworks.online`,
         passwordHash: 'dummy-hash',
         firstName: 'Security',
         lastName: 'Superadmin',

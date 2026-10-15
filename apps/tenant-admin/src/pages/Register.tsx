@@ -109,10 +109,18 @@ export function RegisterPage() {
       // Update dev slug if on localhost fallback
       setDevSlug(res.tenant.slug);
 
-      // In production, navigate to the tenant's full domain:
+      // In production/staging, navigate to the tenant's full domain:
       const host = window.location.hostname;
-      if (host.endsWith('whitraworks.com')) {
-        window.location.href = `https://${res.tenant.slug}.whitraworks.com/`;
+      if (res.tenant.workspaceUrl) {
+        if (host.endsWith('whitraworks.online') || (host.endsWith('localhost') && host !== 'localhost')) {
+          window.location.href = res.tenant.workspaceUrl;
+          return;
+        }
+      }
+      if (host.endsWith('stage.whitraworks.online')) {
+        window.location.href = `https://${res.tenant.slug}.stage.whitraworks.online/`;
+      } else if (host.endsWith('whitraworks.online')) {
+        window.location.href = `https://${res.tenant.slug}.whitraworks.online/`;
       } else if (host.endsWith('localhost') && host !== 'localhost') {
         window.location.href = `http://${res.tenant.slug}.localhost:3000/`;
       } else {
@@ -240,7 +248,7 @@ export function RegisterPage() {
                     disabled={isLoading}
                   />
                   <span className="text-xs text-zinc-400 dark:text-zinc-500 font-mono select-none pl-1">
-                    .whitraworks.com
+                    .{typeof window !== 'undefined' && window.location.hostname.endsWith('stage.whitraworks.online') ? 'stage.whitraworks.online' : 'whitraworks.online'}
                   </span>
                 </div>
               </div>

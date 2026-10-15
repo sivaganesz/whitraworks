@@ -2,6 +2,7 @@ import { useState, type FormEvent, useEffect } from 'react';
 import { Button } from '@whitraworks/ui';
 import { AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import { opsApi, type TenantListItem, ApiError } from '../lib/api';
+import { getTenantWorkspaceHost } from '../lib/urls';
 
 interface TenantStatusModalProps {
   isOpen: boolean;
@@ -76,7 +77,7 @@ export function TenantStatusModal({ isOpen, onClose, tenant, onSuccess }: Tenant
               </h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                 Target workspace: <span className="font-medium text-zinc-700 dark:text-zinc-300">{tenant.name}</span>{' '}
-                (<code className="font-mono text-zinc-500">{tenant.slug}.whitraworks.com</code>)
+                (<code className="font-mono text-zinc-500">{getTenantWorkspaceHost(tenant.slug)}</code>)
               </p>
             </div>
           </div>

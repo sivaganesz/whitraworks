@@ -53,7 +53,7 @@ describe('Module 6 - Task 6.1: Local Subdomain End-to-End Verification (e2e)', (
     // Create superadmin user for control plane operations
     const superadminUser = await prisma.base.user.create({
       data: {
-        email: `superadmin-${timestamp}@ops.whitraworks.com`,
+        email: `superadmin-${timestamp}@ops.whitraworks.online`,
         passwordHash: 'dummy-hash',
         firstName: 'Platform',
         lastName: 'Superadmin',

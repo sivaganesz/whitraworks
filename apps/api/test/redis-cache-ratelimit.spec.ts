@@ -56,7 +56,7 @@ describe('Task 4: Redis Caching & Distributed Rate Limiting (e2e)', () => {
     // Create superadmin user for ops control plane
     const superadmin = await prisma.base.user.create({
       data: {
-        email: `ops-${Date.now()}@whitraworks.com`,
+        email: `ops-${Date.now()}@whitraworks.online`,
         passwordHash: 'dummy',
         firstName: 'Ops',
         lastName: 'Admin',
@@ -177,7 +177,7 @@ describe('Task 4: Redis Caching & Distributed Rate Limiting (e2e)', () => {
           .set('X-Forwarded-For', uniqueIp)
           .set('x-test-rate-limit', 'true')
           .send({
-            email: 'test@whitraworks.com',
+            email: 'test@whitraworks.online',
             password: 'InvalidPassword123!',
           });
 

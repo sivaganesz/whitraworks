@@ -77,17 +77,11 @@ describe('CORS Origin Validation (Unit & NestJS Integration)', () => {
       });
     });
 
-    describe('Production origins under whitraworks.com', () => {
-      it('allows production apex: https://whitraworks.com', () => {
-        expect(isAllowedOrigin('https://whitraworks.com')).toBe(true);
-      });
-
-      it('allows production operations dashboard: https://ops.whitraworks.com', () => {
-        expect(isAllowedOrigin('https://ops.whitraworks.com')).toBe(true);
-      });
-
-      it('allows production tenant workspace: https://demo.whitraworks.com', () => {
-        expect(isAllowedOrigin('https://demo.whitraworks.com')).toBe(true);
+    describe('Disallowed legacy domains', () => {
+      it('rejects legacy whitraworks.com origins (apex and subdomains)', () => {
+        expect(isAllowedOrigin('https://whitraworks.com')).toBe(false);
+        expect(isAllowedOrigin('https://ops.whitraworks.com')).toBe(false);
+        expect(isAllowedOrigin('https://demo.whitraworks.com')).toBe(false);
       });
     });
 
@@ -175,13 +169,14 @@ describe('CORS Origin Validation (Unit & NestJS Integration)', () => {
     it('resolves true for allowed origins', async () => {
       await expect(invokeOriginCallback('https://ops.stage.whitraworks.online')).resolves.toBe(true);
       await expect(invokeOriginCallback('https://demo.stage.whitraworks.online')).resolves.toBe(true);
-      await expect(invokeOriginCallback('https://ops.whitraworks.com')).resolves.toBe(true);
+      await expect(invokeOriginCallback('https://ops.whitraworks.online')).resolves.toBe(true);
       await expect(invokeOriginCallback('http://ops.localhost:3001')).resolves.toBe(true);
       await expect(invokeOriginCallback(undefined)).resolves.toBe(true);
     });
 
     it('resolves false (without throwing) for disallowed origins', async () => {
       await expect(invokeOriginCallback('https://evil.example.com')).resolves.toBe(false);
+      await expect(invokeOriginCallback('https://ops.whitraworks.com')).resolves.toBe(false);
       await expect(invokeOriginCallback('https://whitraworks.online.evil.example')).resolves.toBe(false);
       await expect(invokeOriginCallback('https://foo.bar.stage.whitraworks.online')).resolves.toBe(false);
     });

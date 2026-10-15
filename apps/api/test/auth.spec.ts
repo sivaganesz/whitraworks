@@ -241,18 +241,76 @@ describe('Auth & Collision-Guarded Registration (e2e)', () => {
       expect(res.body.error.code).toBe(API_ERROR_CODES.AUTH_FORBIDDEN);
     });
 
+    let superadminCookie: string;
+
     it('Root Superadmin CAN log in to ops control plane', async () => {
       const res = await request(app.getHttpServer())
         .post('/auth/login')
         .set('Host', 'ops.localhost:4000')
         .send({
-          email: process.env.INITIAL_SUPERADMIN_EMAIL || 'superadmin@whitraworks.com',
+          email: process.env.INITIAL_SUPERADMIN_EMAIL || 'superadmin@whitraworks.online',
           password: process.env.INITIAL_SUPERADMIN_PASSWORD || 'ChangeMeImmediately123!',
         });
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data.user.isPlatformSuperadmin).toBe(true);
+
+      const cookies = res.headers['set-cookie'];
+      expect(cookies).toBeDefined();
+      superadminCookie = cookies[0];
+    });
+
+    it('Ops Admin GET /auth/me returns superadmin session on control plane host', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/auth/me')
+        .set('Host', 'ops.localhost:4000')
+        .set('Cookie', [superadminCookie]);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.user.isPlatformSuperadmin).toBe(true);
+      expect(res.body.data.activeWorkspace).toBeNull();
+    });
+
+    it('Ops Admin POST /auth/logout clears control plane session cookies and invalidates token in Redis', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/auth/logout')
+        .set('Host', 'ops.localhost:4000')
+        .set('Cookie', [superadminCookie]);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.message).toBe('Successfully logged out.');
+
+      const cookies = res.headers['set-cookie'];
+      expect(cookies).toBeDefined();
+      const isCleared = cookies.some((c: string) => c.includes('Max-Age=0') || c.includes('Expires=Thu, 01 Jan 1970'));
+      expect(isCleared).toBe(true);
+
+      // Verify that presenting the logged-out superadmin token is now rejected with 401
+      const replayRes = await request(app.getHttpServer())
+        .get('/auth/me')
+        .set('Host', 'ops.localhost:4000')
+        .set('Cookie', [superadminCookie]);
+
+      expect(replayRes.status).toBe(401);
+      expect(replayRes.body.error.code).toBe(API_ERROR_CODES.SESSION_EXPIRED);
+    });
+
+    it('Ops Admin POST /auth/logout succeeds gracefully even if unauthenticated or token missing', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/auth/logout')
+        .set('Host', 'ops.localhost:4000');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.message).toBe('Successfully logged out.');
+
+      const cookies = res.headers['set-cookie'];
+      expect(cookies).toBeDefined();
+      const isCleared = cookies.some((c: string) => c.includes('Max-Age=0') || c.includes('Expires=Thu, 01 Jan 1970'));
+      expect(isCleared).toBe(true);
     });
   });
 });

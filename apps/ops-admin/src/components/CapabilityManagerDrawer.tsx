@@ -16,6 +16,7 @@ import {
   type CapabilityItem,
   ApiError,
 } from '../lib/api';
+import { getTenantWorkspaceHost } from '../lib/urls';
 
 interface CapabilityManagerDrawerProps {
   isOpen: boolean;
@@ -215,7 +216,7 @@ export function CapabilityManagerDrawer({
                   </span>
                   <span className="text-zinc-300 dark:text-zinc-700">•</span>
                   <code className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400">
-                    {tenant.slug}.whitraworks.com
+                    {getTenantWorkspaceHost(tenant.slug)}
                   </code>
                 </div>
               </div>

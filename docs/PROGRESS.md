@@ -23,9 +23,9 @@
 
 ## 🔒 Architectural Decisions Locked In
 
-* [x] **Two-Tier Administration Boundary**: Control Plane (`apps/ops-admin` on `ops.whitraworks.com`) completely separated from Data Plane (`apps/tenant-admin` on `<slug>.whitraworks.com`).
+* [x] **Two-Tier Administration Boundary**: Control Plane (`apps/ops-admin` on `ops.whitraworks.online`) completely separated from Data Plane (`apps/tenant-admin` on `<slug>.whitraworks.online`).
 * [x] **Identity Model (Scenario A)**: Global `User` $\rightarrow$ `WorkspaceMember` $\rightarrow$ `Tenant`. One user creates one workspace at public signup. If email exists, collision error directs to existing workspace. Multi-workspace access is 100% invite-only.
-* [x] **Subdomain Architecture**: Subdomains resolved via `Host` header (`*.localhost` in local dev). Cookies are strictly host-scoped (no wildcard `.whitraworks.com`) to eliminate cross-subdomain session leaks.
+* [x] **Subdomain Architecture**: Subdomains resolved via `Host` header (`*.localhost` in local dev). Cookies are strictly host-scoped (no wildcard `.whitraworks.online`) to eliminate cross-subdomain session leaks.
 * [x] **Capability Configuration Engine**: Replaces hard-coded conditional branches (`if restaurant...`) with modular capabilities toggled per tenant by Root Ops.
 * [x] **Technology Stack**: Monorepo (`pnpm` + Turborepo), NestJS modular monolith (`apps/api`), React 19 + Vite frontends, PostgreSQL 16 + Prisma ORM with automated tenant isolation extensions.
 
