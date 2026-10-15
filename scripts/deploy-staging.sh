@@ -25,6 +25,7 @@ TENANT_SERVICE="tenant-admin"
 API_CONTAINER="${API_CONTAINER:-whitraworks-stage-api}"
 OPS_CONTAINER="${OPS_CONTAINER:-whitraworks-stage-ops-admin}"
 TENANT_CONTAINER="${TENANT_CONTAINER:-whitraworks-stage-tenant-admin}"
+GATEWAY_CONTAINER="${GATEWAY_CONTAINER:-whitraworks-stage-gateway}"
 
 API_IMAGE_TAG="ghcr.io/sivaganesz/whitraworks-api:stage"
 OPS_IMAGE_TAG="ghcr.io/sivaganesz/whitraworks-ops-admin:stage"
@@ -200,6 +201,12 @@ execute_rollback() {
     log_warn "Recreating application containers targeting restored previous images..."
     if [[ "${rollback_failed}" -eq 0 ]] && "${DOCKER_CMD[@]}" compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --no-deps "${API_SERVICE}" "${OPS_SERVICE}" "${TENANT_SERVICE}"; then
         log_warn "Application containers successfully reverted to previous images."
+        log_warn "Reloading Nginx gateway to synchronize restored container IPs..."
+        if "${DOCKER_CMD[@]}" exec "${GATEWAY_CONTAINER}" nginx -s reload 2>/dev/null; then
+            log_warn "Gateway successfully reloaded after container rollback."
+        else
+            log_error "WARNING: Rollback restored containers, but Nginx gateway reload failed inside '${GATEWAY_CONTAINER}'! Stale upstream routes may persist until gateway is manually reloaded."
+        fi
     else
         log_error "CRITICAL: Rollback recreation failed! Application containers could not be restored to previous images."
     fi
@@ -222,7 +229,7 @@ execute_rollback() {
 # Pre-Flight Validation
 # ------------------------------------------------------------------------------
 validate_prerequisites() {
-    log_info "Step 1/5: Validating prerequisites and capturing container state..."
+    log_info "Step 1/6: Validating prerequisites and capturing container state..."
 
     if ! command -v docker >/dev/null 2>&1; then
         log_error "Docker CLI is not installed or not in PATH."
@@ -272,7 +279,7 @@ validate_prerequisites() {
 # Image Pulling
 # ------------------------------------------------------------------------------
 pull_images() {
-    log_info "Step 2/5: Pulling latest :stage images from GitHub Container Registry..."
+    log_info "Step 2/6: Pulling latest :stage images from GitHub Container Registry..."
     "${DOCKER_CMD[@]}" compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" pull "${API_SERVICE}" "${OPS_SERVICE}" "${TENANT_SERVICE}"
     log_info "Application images pulled successfully."
 }
@@ -282,11 +289,11 @@ pull_images() {
 # ------------------------------------------------------------------------------
 run_database_migration() {
     if [[ "${RUN_MIGRATIONS}" != "1" ]]; then
-        log_info "Step 3/5: Skipping database migration (RUN_MIGRATIONS=${RUN_MIGRATIONS})."
+        log_info "Step 3/6: Skipping database migration (RUN_MIGRATIONS=${RUN_MIGRATIONS})."
         return 0
     fi
 
-    log_info "Step 3/5: Executing database schema migration via ephemeral container (${DB_MIGRATE_CMD})..."
+    log_info "Step 3/6: Executing database schema migration via ephemeral container (${DB_MIGRATE_CMD})..."
     log_warn "Notice: Prisma db:push does not support automatic down-migrations. Breaking schema changes cannot be automatically rolled back."
 
     read -r -a migrate_cmd_array <<< "${DB_MIGRATE_CMD}"
@@ -303,7 +310,7 @@ run_database_migration() {
 # Application Service Recreation
 # ------------------------------------------------------------------------------
 recreate_services() {
-    log_info "Step 4/5: Recreating application services (--no-deps)..."
+    log_info "Step 4/6: Recreating application services (--no-deps)..."
     # Recreate ONLY api, ops-admin, and tenant-admin without restarting postgres, redis, or gateway
     "${DOCKER_CMD[@]}" compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --no-deps "${API_SERVICE}" "${OPS_SERVICE}" "${TENANT_SERVICE}"
     CONTAINERS_RECREATED=1
@@ -314,7 +321,7 @@ recreate_services() {
 # Health Checks & Verification
 # ------------------------------------------------------------------------------
 verify_health() {
-    log_info "Step 5/5: Verifying container health status (startup grace: ${STARTUP_GRACE_SECONDS}s, max attempts: ${MAX_HEALTH_ATTEMPTS})..."
+    log_info "Step 5/6: Verifying container health status (startup grace: ${STARTUP_GRACE_SECONDS}s, max attempts: ${MAX_HEALTH_ATTEMPTS})..."
     sleep "${STARTUP_GRACE_SECONDS}"
 
     local attempt=1
@@ -377,6 +384,36 @@ verify_health() {
 }
 
 # ------------------------------------------------------------------------------
+# Gateway Configuration Validation & Graceful Reload
+# ------------------------------------------------------------------------------
+reload_gateway() {
+    log_info "Step 6/6: Validating and reloading Nginx gateway configuration to sync container IPs..."
+
+    local gateway_status
+    gateway_status="$("${DOCKER_CMD[@]}" inspect --format='{{.State.Status}}' "${GATEWAY_CONTAINER}" 2>/dev/null || echo "not_found")"
+
+    if [[ "${gateway_status}" != "running" ]]; then
+        log_error "Gateway container '${GATEWAY_CONTAINER}' is not running (status: ${gateway_status}). Cannot reload Nginx."
+        return 1
+    fi
+
+    log_info "Testing Nginx gateway configuration syntax inside '${GATEWAY_CONTAINER}'..."
+    if ! "${DOCKER_CMD[@]}" exec "${GATEWAY_CONTAINER}" nginx -t; then
+        log_error "Nginx gateway configuration test failed inside '${GATEWAY_CONTAINER}'! Aborting deployment."
+        return 1
+    fi
+
+    log_info "Gracefully reloading Nginx gateway inside '${GATEWAY_CONTAINER}'..."
+    if ! "${DOCKER_CMD[@]}" exec "${GATEWAY_CONTAINER}" nginx -s reload; then
+        log_error "Failed to reload Nginx gateway inside '${GATEWAY_CONTAINER}'!"
+        return 1
+    fi
+    sleep 1
+
+    log_info "Nginx gateway configuration validated and reloaded successfully."
+}
+
+# ------------------------------------------------------------------------------
 # Main Flow
 # ------------------------------------------------------------------------------
 main() {
@@ -395,6 +432,7 @@ main() {
     run_database_migration
     recreate_services
     verify_health
+    reload_gateway
 
     # Clear traps on success and release lock
     trap - ERR
